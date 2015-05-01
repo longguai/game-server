@@ -194,3 +194,7 @@ FakesAssemblies/
 
 # Visual Studio 6 workspace options file
 *.opt
+
+!server-test/mysql/mysql5.6/lib/vs10/mysqlclient.lib
+!server-test/mysql/mysql5.6/lib/vs11/mysqlclient.lib
+
