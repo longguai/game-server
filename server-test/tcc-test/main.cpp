@@ -8,7 +8,6 @@ int main(int, char **)
     char program[] = "int foo() { return 123; }";
     TCCState *s = tcc_new();
 
-    tcc_set_lib_path(s, "E:/GitHub/server-test/server-test/tcc/tcc-0.9.26/");
     tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
 
     if (tcc_compile_string(s, program) != -1)
