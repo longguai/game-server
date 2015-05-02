@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="tcc-0.9.26">
+      <UniqueIdentifier>{a6ab3a35-e119-47fe-8618-9b582f36ffb1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="tcc-0.9.26\libtcc.c">
+      <Filter>tcc-0.9.26</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tcc-0.9.26\libtcc.h">
+      <Filter>tcc-0.9.26</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

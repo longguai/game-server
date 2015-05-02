@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{ceda657d-83ce-45c4-b12a-cad609511d58}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\iocp-core.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\iocp-debug.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\iocp-exception.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\iocp-mutex.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
