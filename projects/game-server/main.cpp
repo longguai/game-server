@@ -1,4 +1,5 @@
 #include <utility>
+#include <thread>
 
 #define ASIO_STANDALONE
 #include "../../support/asio-1.10.4/asio.hpp"
@@ -34,7 +35,7 @@ private:
     void _doWrite(size_t length)
     {
         asio::async_write(_socket, asio::buffer(_data, length),
-            [this](std::error_code ec, std::size_t length) {
+            [this](std::error_code ec, size_t length) {
             if (!ec)
             {
                 _doRead();
@@ -52,10 +53,10 @@ private:
     char _data[max_length];
 };
 
-class Server
+class EchoServer
 {
 public:
-    Server(asio::io_service& io_service, short port)
+    EchoServer(asio::io_service& io_service, unsigned short port)
         : _acceptor(io_service, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
         _socket(io_service)
     {
@@ -79,14 +80,26 @@ private:
 };
 
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
-    printf("test asio");
-
     try {
         asio::io_service ios;
-        Server s(ios, 8899);
-        ios.run();
+        EchoServer s(ios, 8899);
+
+        SYSTEM_INFO systemInfo;
+        ::GetSystemInfo(&systemInfo);
+        DWORD workerThreadCnt = systemInfo.dwNumberOfProcessors * 2 + 2;
+        std::vector<std::thread *> workerThreads;
+        for (DWORD i = 0; i < workerThreadCnt; ++i)
+        {
+            workerThreads.push_back(new std::thread([&ios](){ ios.run(); }));
+        }
+
+        for (DWORD i = 0; i < workerThreadCnt; ++i)
+        {
+            workerThreads[i]->join();
+            delete workerThreads[i];
+        }
     }
     catch (std::exception &e) {
         printf("%s\n", e.what());
