@@ -12,84 +12,84 @@
 
 namespace echo {
 
-class Session
-{
-public:
-    Session(asio::ip::tcp::socket &&socket) : _socket(std::move(socket))
+    class Session
     {
-    }
+    public:
+        Session(asio::ip::tcp::socket &&socket) : _socket(std::move(socket))
+        {
+        }
 
-    void start()
-    {
-        _doRead();
-    }
+        void start()
+        {
+            _doRead();
+        }
 
-private:
-    void _doRead()
-    {
-        _socket.async_read_some(asio::buffer(_data, max_length),
-            [this](std::error_code ec, size_t length) {
-            if (!ec)
-            {
-                _doWrite(length);
-            }
-            else
-            {
-                delete this;
-            }
-        });
-    }
-
-    void _doWrite(size_t length)
-    {
-        asio::async_write(_socket, asio::buffer(_data, length),
-            [this](std::error_code ec, size_t length) {
-            if (!ec)
-            {
-                _doRead();
-            }
-            else
-            {
-                delete this;
-            }
-        });
-    }
-
-    asio::ip::tcp::socket _socket;
-
-    enum { max_length = 1024 };
-    char _data[max_length];
-};
-
-class Server
-{
-public:
-    Server(asio::io_service &service, unsigned short port)
-        : _acceptor(service, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
-        _socket(service)
-    {
-        _doAccept();
-    }
-
-private:
-    void _doAccept()
-    {
-        _acceptor.async_accept(_socket, [this](std::error_code ec) {
-            if (!ec)
-            {
-                Session *s = new (std::nothrow) Session(std::move(_socket));
-                if (s != nullptr)
+    private:
+        void _doRead()
+        {
+            _socket.async_read_some(asio::buffer(_data, max_length),
+                [this](std::error_code ec, size_t length) {
+                if (!ec)
                 {
-                    s->start();
+                    _doWrite(length);
                 }
-            }
-            _doAccept();
-        });
-    }
+                else
+                {
+                    delete this;
+                }
+            });
+        }
 
-    asio::ip::tcp::acceptor _acceptor;
-    asio::ip::tcp::socket _socket;
-};
+        void _doWrite(size_t length)
+        {
+            asio::async_write(_socket, asio::buffer(_data, length),
+                [this](std::error_code ec, size_t length) {
+                if (!ec)
+                {
+                    _doRead();
+                }
+                else
+                {
+                    delete this;
+                }
+            });
+        }
+
+        asio::ip::tcp::socket _socket;
+
+        enum { max_length = 1024 };
+        char _data[max_length];
+    };
+
+    class Server
+    {
+    public:
+        Server(asio::io_service &service, unsigned short port)
+            : _acceptor(service, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
+            _socket(service)
+        {
+            _doAccept();
+        }
+
+    private:
+        void _doAccept()
+        {
+            _acceptor.async_accept(_socket, [this](std::error_code ec) {
+                if (!ec)
+                {
+                    Session *s = new (std::nothrow) Session(std::move(_socket));
+                    if (s != nullptr)
+                    {
+                        s->start();
+                    }
+                }
+                _doAccept();
+            });
+        }
+
+        asio::ip::tcp::acceptor _acceptor;
+        asio::ip::tcp::socket _socket;
+    };
 
 }
 
@@ -101,7 +101,7 @@ namespace chat {
     class Session
     {
     public:
-        Session(asio::ip::tcp::socket &&socket, std::function<void(Session *, std::error_code, const char *, size_t)> &&callback)
+        Session(asio::ip::tcp::socket &&socket, std::function<void (Session *, std::error_code, const char *, size_t)> &&callback)
             : _socket(std::move(socket))
             , _callback(callback)
         {
@@ -156,7 +156,7 @@ namespace chat {
 
         std::deque<asio::const_buffers_1> _writeQueue;
 
-        std::function<void(Session *, std::error_code, const char *, size_t)> _callback;
+        std::function<void (Session *, std::error_code, const char *, size_t)> _callback;
     };
 
     class Server
