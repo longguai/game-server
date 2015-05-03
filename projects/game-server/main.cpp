@@ -95,6 +95,7 @@ namespace echo {
 
 #include <deque>
 #include <set>
+#include <mutex>
 
 namespace chat {
 
@@ -178,19 +179,25 @@ namespace chat {
                     Session *s = new (std::nothrow) Session(std::move(_socket), [this](Session *s, std::error_code ec, const char *data, size_t length) {
                         if (!ec)
                         {
+                            _mutex.lock();
                             std::for_each(_sessions.begin(), _sessions.end(), [data, length](Session *s) {
                                 s->deliver(data, length);
                             });
+                            _mutex.unlock();
                         }
                         else
                         {
+                            _mutex.lock();
                             _sessions.erase(s);
+                            _mutex.unlock();
                             delete s;
                         }
                     });
                     if (s != nullptr)
                     {
+                        _mutex.lock();
                         _sessions.insert(s);
+                        _mutex.unlock();
                         s->start();
                     }
                 }
@@ -202,6 +209,7 @@ namespace chat {
         asio::ip::tcp::socket _socket;
 
         std::set<Session *> _sessions;
+        std::mutex _mutex;
     };
 
 }
