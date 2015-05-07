@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asio-test", "..\..\..\projects\asio-test\asio-test.vcxproj", "{2BB39326-DF77-40CD-B70A-712886318A16}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "game-server", "..\..\..\projects\game-server\game-server.vcxproj", "{56F215D0-D69E-4582-94A1-1002C3570F3C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mysql", "..\..\..\projects\mysql\mysql.vcxproj", "{47CC3FEE-F059-4FAB-BC5A-478912C32A98}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tcc", "..\..\..\projects\tcc\tcc.vcxproj", "{AF2869A4-29AB-4FA1-8910-DE9AF89AAB9A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tcc-test", "..\..\..\projects\tcc-test\tcc-test.vcxproj", "{D2EA94C9-038A-478B-B5C4-566CECCC22BC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AF2869A4-29AB-4FA1-8910-DE9AF89AAB9A} = {AF2869A4-29AB-4FA1-8910-DE9AF89AAB9A}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2BB39326-DF77-40CD-B70A-712886318A16}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2BB39326-DF77-40CD-B70A-712886318A16}.Debug|Win32.Build.0 = Debug|Win32
+		{2BB39326-DF77-40CD-B70A-712886318A16}.Release|Win32.ActiveCfg = Release|Win32
+		{2BB39326-DF77-40CD-B70A-712886318A16}.Release|Win32.Build.0 = Release|Win32
+		{56F215D0-D69E-4582-94A1-1002C3570F3C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{56F215D0-D69E-4582-94A1-1002C3570F3C}.Debug|Win32.Build.0 = Debug|Win32
+		{56F215D0-D69E-4582-94A1-1002C3570F3C}.Release|Win32.ActiveCfg = Release|Win32
+		{56F215D0-D69E-4582-94A1-1002C3570F3C}.Release|Win32.Build.0 = Release|Win32
+		{47CC3FEE-F059-4FAB-BC5A-478912C32A98}.Debug|Win32.ActiveCfg = Debug|Win32
+		{47CC3FEE-F059-4FAB-BC5A-478912C32A98}.Debug|Win32.Build.0 = Debug|Win32
+		{47CC3FEE-F059-4FAB-BC5A-478912C32A98}.Release|Win32.ActiveCfg = Release|Win32
+		{47CC3FEE-F059-4FAB-BC5A-478912C32A98}.Release|Win32.Build.0 = Release|Win32
+		{AF2869A4-29AB-4FA1-8910-DE9AF89AAB9A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AF2869A4-29AB-4FA1-8910-DE9AF89AAB9A}.Debug|Win32.Build.0 = Debug|Win32
+		{AF2869A4-29AB-4FA1-8910-DE9AF89AAB9A}.Release|Win32.ActiveCfg = Release|Win32
+		{AF2869A4-29AB-4FA1-8910-DE9AF89AAB9A}.Release|Win32.Build.0 = Release|Win32
+		{D2EA94C9-038A-478B-B5C4-566CECCC22BC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D2EA94C9-038A-478B-B5C4-566CECCC22BC}.Debug|Win32.Build.0 = Debug|Win32
+		{D2EA94C9-038A-478B-B5C4-566CECCC22BC}.Release|Win32.ActiveCfg = Release|Win32
+		{D2EA94C9-038A-478B-B5C4-566CECCC22BC}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
