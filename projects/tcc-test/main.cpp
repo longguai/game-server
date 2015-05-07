@@ -1,7 +1,7 @@
 #include "../tcc/tcc-0.9.26/tcc.h"
 #undef malloc
 #undef free
-#pragma comment(lib, "../../build/game-server/Debug/tcc.lib")
+#pragma comment(lib, "../../build/game-server/win32/Debug/tcc.lib")
 
 int main(int, char **)
 {
