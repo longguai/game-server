@@ -94,7 +94,7 @@ namespace echo {
 }
 
 #include <deque>
-#include <set>
+#include <unordered_set>
 #include <mutex>
 
 namespace chat {
@@ -208,7 +208,7 @@ namespace chat {
         asio::ip::tcp::acceptor _acceptor;
         asio::ip::tcp::socket _socket;
 
-        std::set<Session *> _sessions;
+        std::unordered_set<Session *> _sessions;
         std::mutex _mutex;
     };
 
