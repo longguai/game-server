@@ -102,7 +102,7 @@ namespace chat {
     class Session
     {
     public:
-        Session(asio::ip::tcp::socket &&socket, std::function<void (Session *, std::error_code, const char *, size_t)> &&callback)
+        Session(asio::ip::tcp::socket &&socket, std::function<void (Session *, const char *, size_t)> &&callback)
             : _socket(std::move(socket))
             , _callback(callback)
         {
@@ -127,10 +127,14 @@ namespace chat {
         void _doRead()
         {
             _socket.async_read_some(asio::buffer(_readData, max_length), [this](std::error_code ec, size_t length) {
-                _callback(this, ec, _readData, length);
                 if (!ec)
                 {
+                    _callback(this, _readData, length);
                     _doRead();
+                }
+                else
+                {
+                    _callback(this, nullptr, 0);
                 }
             });
         }
@@ -147,7 +151,7 @@ namespace chat {
             }
             else
             {
-                _callback(this, ec, nullptr, 0);
+                _callback(this, nullptr, 0);
             }
         }
 
@@ -157,7 +161,7 @@ namespace chat {
 
         std::deque<asio::const_buffers_1> _writeQueue;
 
-        std::function<void (Session *, std::error_code, const char *, size_t)> _callback;
+        std::function<void (Session *, const char *, size_t)> _callback;
     };
 
     class Server
@@ -176,8 +180,8 @@ namespace chat {
             _acceptor.async_accept(_socket, [this](std::error_code ec) {
                 if (!ec)
                 {
-                    Session *s = new (std::nothrow) Session(std::move(_socket), [this](Session *s, std::error_code ec, const char *data, size_t length) {
-                        if (!ec)
+                    Session *s = new (std::nothrow) Session(std::move(_socket), [this](Session *s, const char *data, size_t length) {
+                        if (data != nullptr)
                         {
                             _mutex.lock();
                             std::for_each(_sessions.begin(), _sessions.end(), [data, length](Session *s) {
