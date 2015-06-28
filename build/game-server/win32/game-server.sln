@@ -16,6 +16,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tcc-test", "..\..\..\projec
 		{AF2869A4-29AB-4FA1-8910-DE9AF89AAB9A} = {AF2869A4-29AB-4FA1-8910-DE9AF89AAB9A}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "json-test", "..\..\..\projects\json-test\json-test.vcxproj", "{0D0D5B6D-7092-458D-85A0-7B63CA5EF339}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -42,6 +44,10 @@ Global
 		{D2EA94C9-038A-478B-B5C4-566CECCC22BC}.Debug|Win32.Build.0 = Debug|Win32
 		{D2EA94C9-038A-478B-B5C4-566CECCC22BC}.Release|Win32.ActiveCfg = Release|Win32
 		{D2EA94C9-038A-478B-B5C4-566CECCC22BC}.Release|Win32.Build.0 = Release|Win32
+		{0D0D5B6D-7092-458D-85A0-7B63CA5EF339}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0D0D5B6D-7092-458D-85A0-7B63CA5EF339}.Debug|Win32.Build.0 = Debug|Win32
+		{0D0D5B6D-7092-458D-85A0-7B63CA5EF339}.Release|Win32.ActiveCfg = Release|Win32
+		{0D0D5B6D-7092-458D-85A0-7B63CA5EF339}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
