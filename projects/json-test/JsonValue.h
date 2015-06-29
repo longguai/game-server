@@ -17,8 +17,9 @@
 namespace jw {
 
     struct cJSON_Exception : public std::exception {
-        virtual const char *what() const override {
-            return cJSON_GetErrorPtr();
+        virtual const char *what() const throw () override {
+            const char *e = cJSON_GetErrorPtr();
+            return e != nullptr ? e : "";
         }
     };
 
@@ -347,14 +348,14 @@ namespace jw {
                 switch (root->type) {
                 case cJSON_False: ss << false; break;
                 case cJSON_True: ss << true; break;
-                case cJSON_NULL: ss << nullptr; break;
+                case cJSON_NULL: break;
                 case cJSON_Int: ss << root->valueint; break;
                 case cJSON_Int64: ss << root->valueint64; break;
                 case cJSON_Number: ss << root->valuedouble; break;
                 case cJSON_String: ss << root->string; break;
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to target type"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to target type"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 ss >> t;
                 return t;
@@ -373,9 +374,9 @@ namespace jw {
                 case cJSON_Int64: return static_cast<char>(root->valueint64);
                 case cJSON_Number: return static_cast<char>(root->valuedouble);
                 case cJSON_String: return static_cast<char>(atoi(root->valuestring));
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to 'char'"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'char'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 return 0;
             }
@@ -392,9 +393,9 @@ namespace jw {
                 case cJSON_Int64: return static_cast<signed char>(root->valueint64);
                 case cJSON_Number: return static_cast<signed char>(root->valuedouble);
                 case cJSON_String: return static_cast<signed char>(atoi(root->valuestring));
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to 'signed char'"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'signed char'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 return 0;
             }
@@ -411,9 +412,9 @@ namespace jw {
                 case cJSON_Int64: return static_cast<unsigned char>(root->valueint64);
                 case cJSON_Number: return static_cast<unsigned char>(root->valuedouble);
                 case cJSON_String: return static_cast<unsigned char>(atoi(root->valuestring));
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to 'unsigned char'"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'unsigned char'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 return 0;
             }
@@ -430,9 +431,9 @@ namespace jw {
                 case cJSON_Int64: return static_cast<short>(root->valueint64);
                 case cJSON_Number: return static_cast<short>(root->valuedouble);
                 case cJSON_String: return static_cast<short>(atoi(root->valuestring));
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to 'short'"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'short'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 return 0;
             }
@@ -449,9 +450,9 @@ namespace jw {
                 case cJSON_Int64: return static_cast<unsigned short>(root->valueint64);
                 case cJSON_Number: return static_cast<unsigned short>(root->valuedouble);
                 case cJSON_String: return static_cast<unsigned short>(atoi(root->valuestring));
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to 'unsigned short'"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'unsigned short'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 return 0;
             }
@@ -468,9 +469,9 @@ namespace jw {
                 case cJSON_Int64: return static_cast<int>(root->valueint64);
                 case cJSON_Number: return static_cast<int>(root->valuedouble);
                 case cJSON_String: return atoi(root->valuestring);
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to 'int'"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'int'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 return 0;
             }
@@ -487,9 +488,9 @@ namespace jw {
                 case cJSON_Int64: return static_cast<unsigned>(root->valueint64);
                 case cJSON_Number: return static_cast<unsigned>(root->valuedouble);
                 case cJSON_String: return static_cast<unsigned>(atoi(root->valuestring));
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to 'unsigned'"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'unsigned'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 return 0U;
             }
@@ -506,9 +507,9 @@ namespace jw {
                 case cJSON_Int64: return root->valueint64;
                 case cJSON_Number: return static_cast<int64_t>(root->valuedouble);
                 case cJSON_String: return atoll(root->valuestring);
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to 'int64_t'"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'int64_t'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 return 0LL;
             }
@@ -525,9 +526,9 @@ namespace jw {
                 case cJSON_Int64: return static_cast<uint64_t>(root->valueint64);
                 case cJSON_Number: return static_cast<uint64_t>(root->valuedouble);
                 case cJSON_String: return atoll(root->valuestring);
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to 'uint64_t'"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'uint64_t'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 return 0ULL;
             }
@@ -544,9 +545,9 @@ namespace jw {
                 case cJSON_Int64: return static_cast<float>(root->valueint64);
                 case cJSON_Number: return static_cast<float>(root->valuedouble);
                 case cJSON_String: return static_cast<float>(atof(root->valuestring));
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to 'float'"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'float'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 return 0;
             }
@@ -563,9 +564,9 @@ namespace jw {
                 case cJSON_Int64: return static_cast<double>(root->valueint64);
                 case cJSON_Number: return static_cast<double>(root->valuedouble);
                 case cJSON_String: return atof(root->valuestring);
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to 'double'"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'double'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 return 0;
             }
@@ -595,9 +596,9 @@ namespace jw {
                     return ss.str();
                 }
                 case cJSON_String: return root->valuestring;
-                case cJSON_Array: throw std::bad_cast(); break;
-                case cJSON_Object: throw std::bad_cast(); break;
-                default: throw std::out_of_range("type out of range"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Array to 'string'"); break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'string'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
                 return std::basic_string<char, _TRAITS, _ALLOC>();
             }
@@ -607,84 +608,144 @@ namespace jw {
         template <class _T, class _ALLOC>
         struct JsonValueAsImpl<std::vector<_T, _ALLOC> > {
             static std::vector<_T, _ALLOC> invoke(cJSON *root) {
-                if (cJSON_Array == root->type) {
-                    std::vector<_T, _ALLOC> ret;
+                std::vector<_T, _ALLOC> ret;
+                switch (root->type) {
+                case cJSON_False:  throw std::logic_error("Cannot convert cJSON_False to 'array'"); break;
+                case cJSON_True:  throw std::logic_error("Cannot convert cJSON_True to 'array'"); break;
+                case cJSON_NULL: break;
+                case cJSON_Int: throw std::logic_error("Cannot convert cJSON_Int to 'array'"); break;
+                case cJSON_Int64: throw std::logic_error("Cannot convert cJSON_Int64 to 'array'"); break;
+                case cJSON_Number:  throw std::logic_error("Cannot convert cJSON_Number to 'array'"); break;
+                case cJSON_String: throw std::logic_error("Cannot convert cJSON_String to 'array'"); break;
+                case cJSON_Array:
                     for (cJSON *c = root->child; c != nullptr; c = c->next) {
                         ret.push_back(JsonValueAsImpl<_T>::invoke(c));
                     }
-                    return ret;
+                    break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'array'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
-                throw std::bad_cast();
+                return ret;
             }
         };
 
         template <class _T, class _ALLOC>
         struct JsonValueAsImpl<std::list<_T, _ALLOC> > {
             static std::list<_T, _ALLOC> invoke(cJSON *root) {
-                if (cJSON_Array == root->type) {
-                    std::list<_T, _ALLOC> ret;
+                std::list<_T, _ALLOC> ret;
+                switch (root->type) {
+                case cJSON_False:  throw std::logic_error("Cannot convert cJSON_False to 'array'"); break;
+                case cJSON_True:  throw std::logic_error("Cannot convert cJSON_True to 'array'"); break;
+                case cJSON_NULL: break;
+                case cJSON_Int: throw std::logic_error("Cannot convert cJSON_Int to 'array'"); break;
+                case cJSON_Int64: throw std::logic_error("Cannot convert cJSON_Int64 to 'array'"); break;
+                case cJSON_Number:  throw std::logic_error("Cannot convert cJSON_Number to 'array'"); break;
+                case cJSON_String: throw std::logic_error("Cannot convert cJSON_String to 'array'"); break;
+                case cJSON_Array:
                     for (cJSON *c = root->child; c != nullptr; c = c->next) {
                         ret.push_back(JsonValueAsImpl<_T>::invoke(c));
                     }
-                    return ret;
+                    break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'array'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
-                throw std::bad_cast();
+                return ret;
             }
         };
 
         template <class _T, class _P, class _ALLOC>
         struct JsonValueAsImpl<std::set<_T, _P, _ALLOC> > {
             static std::set<_T, _P, _ALLOC> invoke(cJSON *root) {
-                if (cJSON_Array == root->type) {
-                    std::set<_T, _P, _ALLOC> ret;
+                std::set<_T, _P, _ALLOC> ret;
+                switch (root->type) {
+                case cJSON_False:  throw std::logic_error("Cannot convert cJSON_False to 'array'"); break;
+                case cJSON_True:  throw std::logic_error("Cannot convert cJSON_True to 'array'"); break;
+                case cJSON_NULL: break;
+                case cJSON_Int: throw std::logic_error("Cannot convert cJSON_Int to 'array'"); break;
+                case cJSON_Int64: throw std::logic_error("Cannot convert cJSON_Int64 to 'array'"); break;
+                case cJSON_Number:  throw std::logic_error("Cannot convert cJSON_Number to 'array'"); break;
+                case cJSON_String: throw std::logic_error("Cannot convert cJSON_String to 'array'"); break;
+                case cJSON_Array:
                     for (cJSON *c = root->child; c != nullptr; c = c->next) {
                         ret.insert(JsonValueAsImpl<_T>::invoke(c));
                     }
-                    return ret;
+                    break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'array'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
-                throw std::bad_cast();
+                return ret;
             }
         };
 
         template <class _T, class _P, class _ALLOC>
         struct JsonValueAsImpl<std::multiset<_T, _P, _ALLOC> > {
             static std::multiset<_T, _P, _ALLOC> invoke(cJSON *root) {
-                if (cJSON_Array == root->type) {
-                    std::multiset<_T, _P, _ALLOC> ret;
+                std::multiset<_T, _P, _ALLOC> ret;
+                switch (root->type) {
+                case cJSON_False:  throw std::logic_error("Cannot convert cJSON_False to 'array'"); break;
+                case cJSON_True:  throw std::logic_error("Cannot convert cJSON_True to 'array'"); break;
+                case cJSON_NULL: break;
+                case cJSON_Int: throw std::logic_error("Cannot convert cJSON_Int to 'array'"); break;
+                case cJSON_Int64: throw std::logic_error("Cannot convert cJSON_Int64 to 'array'"); break;
+                case cJSON_Number:  throw std::logic_error("Cannot convert cJSON_Number to 'array'"); break;
+                case cJSON_String: throw std::logic_error("Cannot convert cJSON_String to 'array'"); break;
+                case cJSON_Array:
                     for (cJSON *c = root->child; c != nullptr; c = c->next) {
                         ret.insert(JsonValueAsImpl<_T>::invoke(c));
                     }
-                    return ret;
+                    break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'array'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
-                throw std::bad_cast();
+                return ret;
             }
         };
 
         template <class _T, class _HASHER, class _EQ, class _ALLOC>
         struct JsonValueAsImpl<std::unordered_set<_T, _HASHER, _EQ, _ALLOC> > {
             static std::unordered_set<_T, _HASHER, _EQ, _ALLOC> invoke(cJSON *root) {
-                if (cJSON_Array == root->type) {
-                    std::unordered_set<_T, _HASHER, _EQ, _ALLOC> ret;
+                std::unordered_set<_T, _HASHER, _EQ, _ALLOC> ret;
+                switch (root->type) {
+                case cJSON_False:  throw std::logic_error("Cannot convert cJSON_False to 'array'"); break;
+                case cJSON_True:  throw std::logic_error("Cannot convert cJSON_True to 'array'"); break;
+                case cJSON_NULL: break;
+                case cJSON_Int: throw std::logic_error("Cannot convert cJSON_Int to 'array'"); break;
+                case cJSON_Int64: throw std::logic_error("Cannot convert cJSON_Int64 to 'array'"); break;
+                case cJSON_Number:  throw std::logic_error("Cannot convert cJSON_Number to 'array'"); break;
+                case cJSON_String: throw std::logic_error("Cannot convert cJSON_String to 'array'"); break;
+                case cJSON_Array:
                     for (cJSON *c = root->child; c != nullptr; c = c->next) {
                         ret.insert(JsonValueAsImpl<_T>::invoke(c));
                     }
-                    return ret;
+                    break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'array'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
-                throw std::bad_cast();
+                return ret;
             }
         };
 
         template <class _T, class _HASHER, class _EQ, class _ALLOC>
         struct JsonValueAsImpl<std::unordered_multiset<_T, _HASHER, _EQ, _ALLOC> > {
             static std::unordered_multiset<_T, _HASHER, _EQ, _ALLOC> invoke(cJSON *root) {
-                if (cJSON_Array == root->type) {
-                    std::unordered_multiset<_T, _HASHER, _EQ, _ALLOC> ret;
+                std::unordered_multiset<_T, _HASHER, _EQ, _ALLOC> ret;
+                switch (root->type) {
+                case cJSON_False:  throw std::logic_error("Cannot convert cJSON_False to 'array'"); break;
+                case cJSON_True:  throw std::logic_error("Cannot convert cJSON_True to 'array'"); break;
+                case cJSON_NULL: break;
+                case cJSON_Int: throw std::logic_error("Cannot convert cJSON_Int to 'array'"); break;
+                case cJSON_Int64: throw std::logic_error("Cannot convert cJSON_Int64 to 'array'"); break;
+                case cJSON_Number:  throw std::logic_error("Cannot convert cJSON_Number to 'array'"); break;
+                case cJSON_String: throw std::logic_error("Cannot convert cJSON_String to 'array'"); break;
+                case cJSON_Array:
                     for (cJSON *c = root->child; c != nullptr; c = c->next) {
                         ret.insert(JsonValueAsImpl<_T>::invoke(c));
                     }
-                    return ret;
+                    break;
+                case cJSON_Object: throw std::logic_error("Cannot convert cJSON_Object to 'array'"); break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
-                throw std::bad_cast();
+                return ret;
             }
         };
 
@@ -763,6 +824,7 @@ namespace jw {
         // 用nullptr赋值
         JSON_Value &operator=(std::nullptr_t) {
             clear();
+            return *this;
         }
 
         // 析构
@@ -789,7 +851,7 @@ namespace jw {
         }
 
         // 当前结点类型
-        inline enum class TYPE {
+        enum class TYPE {
             False = cJSON_False,
             True = cJSON_True,
             Null = cJSON_NULL,
@@ -801,12 +863,12 @@ namespace jw {
             Object = cJSON_Object
         };
 
-        TYPE type() const {
+        inline TYPE type() const {
             return static_cast<TYPE>(_root->type);
         }
 
         // 字符串化
-        std::string stringfiy() {
+        std::string stringfiy() const {
             if (_root != nullptr) {
                 char *out = cJSON_Print(_root);
                 std::string ret = out;
@@ -816,7 +878,16 @@ namespace jw {
             return std::string();
         }
 
-        template <class _T> _T as() {
+        // 重载与nullptr的比较
+        inline bool operator==(std::nullptr_t) const {
+            return (_root == nullptr);
+        }
+
+        inline bool operator!=(std::nullptr_t) const {
+            return (_root != nullptr);
+        }
+
+        template <class _T> _T as() const {
             if (_root != nullptr) {
                 return __json_impl::JsonValueAsImpl<_T>::invoke(_root);
             }
@@ -926,11 +997,6 @@ namespace jw {
     private:
         cJSON *_root = nullptr;
 
-        friend bool operator==(std::nullptr_t, const JSON_Value &js);
-        friend bool operator!=(std::nullptr_t, const JSON_Value &js);
-        friend bool operator==(const JSON_Value &js, std::nullptr_t);
-        friend bool operator!=(const JSON_Value &js, std::nullptr_t);
-
         template <class _OS> friend _OS &operator<<(_OS &os, const JSON_Value &js);
         template <class _T> friend struct __json_impl::JsonValueConstructorImpl;
     };
@@ -948,20 +1014,12 @@ namespace jw {
     }
 
     // 重载与nullptr的比较
-    static inline bool operator==(std::nullptr_t, const JSON_Value &js) {
-        return (js._root == nullptr);
+    static inline bool operator==(std::nullptr_t, const jw::JSON_Value &js) {
+        return js.operator==(nullptr);
     }
 
-    static inline bool operator!=(std::nullptr_t, const JSON_Value &js) {
-        return (js._root != nullptr);
-    }
-
-    static inline bool operator==(const JSON_Value &js, std::nullptr_t) {
-        return (js._root == nullptr);
-    }
-
-    static inline bool operator!=(const JSON_Value &js, std::nullptr_t) {
-        return (js._root != nullptr);
+    static inline bool operator!=(std::nullptr_t, const jw::JSON_Value &js) {
+        return js.operator!=(nullptr);
     }
 
     namespace __json_impl {
@@ -1028,56 +1086,96 @@ namespace jw {
         template <class _TRAITS, class _ALLOC1, class _P, class _ALLOC2>
         struct JsonValueAsImpl<std::map<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _P, _ALLOC2> > {
             static std::map<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _P, _ALLOC2> invoke(cJSON *root) {
-                if (cJSON_Object == root->type) {
-                    std::map<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _P, _ALLOC2> ret;
+                std::map<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _P, _ALLOC2> ret;
+                switch (root->type) {
+                case cJSON_False:  throw std::logic_error("Cannot convert cJSON_False to 'object'"); break;
+                case cJSON_True:  throw std::logic_error("Cannot convert cJSON_True to 'object'"); break;
+                case cJSON_NULL: break;
+                case cJSON_Int: throw std::logic_error("Cannot convert cJSON_Int to 'object'"); break;
+                case cJSON_Int64: throw std::logic_error("Cannot convert cJSON_Int64 to 'object'"); break;
+                case cJSON_Number:  throw std::logic_error("Cannot convert cJSON_Number to 'object'"); break;
+                case cJSON_String: throw std::logic_error("Cannot convert cJSON_String to 'object'"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Object to 'object'"); break;
+                case cJSON_Object:
                     for (cJSON *c = root->child; c != nullptr;  c = c->next) {
                         ret.insert(std::make_pair(c->string, JSON_Value(c, true)));
                     }
-                    return ret;
+                    break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
-                throw std::bad_cast();
+                return ret;
             }
         };
 
         template <class _TRAITS, class _ALLOC1, class _P, class _ALLOC2>
         struct JsonValueAsImpl<std::multimap<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _P, _ALLOC2> > {
             static std::multimap<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _P, _ALLOC2> invoke(cJSON *root) {
-                if (cJSON_Object == root->type) {
-                    std::multimap<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _P, _ALLOC2> ret;
-                    for (cJSON *c = root->child; c != nullptr; c = c->next) {
+                std::multimap<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _P, _ALLOC2> ret;
+                switch (root->type) {
+                case cJSON_False:  throw std::logic_error("Cannot convert cJSON_False to 'object'"); break;
+                case cJSON_True:  throw std::logic_error("Cannot convert cJSON_True to 'object'"); break;
+                case cJSON_NULL: break;
+                case cJSON_Int: throw std::logic_error("Cannot convert cJSON_Int to 'object'"); break;
+                case cJSON_Int64: throw std::logic_error("Cannot convert cJSON_Int64 to 'object'"); break;
+                case cJSON_Number:  throw std::logic_error("Cannot convert cJSON_Number to 'object'"); break;
+                case cJSON_String: throw std::logic_error("Cannot convert cJSON_String to 'object'"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Object to 'object'"); break;
+                case cJSON_Object:
+                    for (cJSON *c = root->child; c != nullptr;  c = c->next) {
                         ret.insert(std::make_pair(c->string, JSON_Value(c, true)));
                     }
-                    return ret;
+                    break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
-                throw std::bad_cast();
+                return ret;
             }
         };
 
         template <class _TRAITS, class _ALLOC1, class _HASHER, class _EQ, class _ALLOC2>
         struct JsonValueAsImpl<std::unordered_map<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _HASHER, _EQ, _ALLOC2> > {
             static std::unordered_map<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _HASHER, _EQ, _ALLOC2> invoke(cJSON *root) {
-                if (cJSON_Object == root->type) {
-                    std::unordered_map<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _HASHER, _EQ, _ALLOC2> ret;
-                    for (cJSON *c = root->child; c != nullptr; c = c->next) {
+                std::unordered_map<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _HASHER, _EQ, _ALLOC2> ret;
+                switch (root->type) {
+                case cJSON_False:  throw std::logic_error("Cannot convert cJSON_False to 'object'"); break;
+                case cJSON_True:  throw std::logic_error("Cannot convert cJSON_True to 'object'"); break;
+                case cJSON_NULL: break;
+                case cJSON_Int: throw std::logic_error("Cannot convert cJSON_Int to 'object'"); break;
+                case cJSON_Int64: throw std::logic_error("Cannot convert cJSON_Int64 to 'object'"); break;
+                case cJSON_Number:  throw std::logic_error("Cannot convert cJSON_Number to 'object'"); break;
+                case cJSON_String: throw std::logic_error("Cannot convert cJSON_String to 'object'"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Object to 'object'"); break;
+                case cJSON_Object:
+                    for (cJSON *c = root->child; c != nullptr;  c = c->next) {
                         ret.insert(std::make_pair(c->string, JSON_Value(c, true)));
                     }
-                    return ret;
+                    break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
-                throw std::bad_cast();
+                return ret;
             }
         };
 
         template <class _TRAITS, class _ALLOC1, class _HASHER, class _EQ, class _ALLOC2>
         struct JsonValueAsImpl<std::unordered_multimap<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _HASHER, _EQ, _ALLOC2> > {
             static std::unordered_multimap<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _HASHER, _EQ, _ALLOC2> invoke(cJSON *root) {
-                if (cJSON_Object == root->type) {
-                    std::unordered_multimap<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _HASHER, _EQ, _ALLOC2> ret;
-                    for (cJSON *c = root->child; c != nullptr; c = c->next) {
+                std::unordered_multimap<std::basic_string<char, _TRAITS, _ALLOC1>, JSON_Value, _HASHER, _EQ, _ALLOC2> ret;
+                switch (root->type) {
+                case cJSON_False:  throw std::logic_error("Cannot convert cJSON_False to 'object'"); break;
+                case cJSON_True:  throw std::logic_error("Cannot convert cJSON_True to 'object'"); break;
+                case cJSON_NULL: break;
+                case cJSON_Int: throw std::logic_error("Cannot convert cJSON_Int to 'object'"); break;
+                case cJSON_Int64: throw std::logic_error("Cannot convert cJSON_Int64 to 'object'"); break;
+                case cJSON_Number:  throw std::logic_error("Cannot convert cJSON_Number to 'object'"); break;
+                case cJSON_String: throw std::logic_error("Cannot convert cJSON_String to 'object'"); break;
+                case cJSON_Array: throw std::logic_error("Cannot convert cJSON_Object to 'object'"); break;
+                case cJSON_Object:
+                    for (cJSON *c = root->child; c != nullptr;  c = c->next) {
                         ret.insert(std::make_pair(c->string, JSON_Value(c, true)));
                     }
-                    return ret;
+                    break;
+                default: throw std::out_of_range("cJSON type out of range"); break;
                 }
-                throw std::bad_cast();
+                return ret;
             }
         };
     }
