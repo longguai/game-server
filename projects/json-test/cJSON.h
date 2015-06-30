@@ -24,6 +24,7 @@
 #define cJSON__h
 
 #include <stddef.h>  // for size_t
+#include <stdint.h>  // for int64_t
 
 #ifdef __cplusplus
 extern "C"
@@ -52,7 +53,7 @@ typedef struct cJSON {
 
 	char *valuestring;			/* The item's string, if type==cJSON_String */
 	int valueint;				/* The item's number, if type==cJSON_Int */
-    long long valueint64;       /* The item's number, if type==cJSON_Int64 */
+    int64_t valueint64;       /* The item's number, if type==cJSON_Int64 */
 	double valuedouble;			/* The item's number, if type==cJSON_Number */
 
 	char *string;				/* The item's name string, if this item is the child of, or is in the list of subitems of an object. */
@@ -92,7 +93,7 @@ extern cJSON *cJSON_CreateTrue(void);
 extern cJSON *cJSON_CreateFalse(void);
 extern cJSON *cJSON_CreateBool(int b);
 extern cJSON *cJSON_CreateInt(int num);
-extern cJSON *cJSON_CreateInt64(long long num);
+extern cJSON *cJSON_CreateInt64(int64_t num);
 extern cJSON *cJSON_CreateNumber(double num);
 extern cJSON *cJSON_CreateString(const char *string);
 extern cJSON *cJSON_CreateArray(void);
@@ -100,7 +101,7 @@ extern cJSON *cJSON_CreateObject(void);
 
 /* These utilities create an Array of count items. */
 extern cJSON *cJSON_CreateIntArray(const int *numbers,int count);
-extern cJSON *cJSON_CreateInt64Array(const long long *numbers, int count);
+extern cJSON *cJSON_CreateInt64Array(const int64_t *numbers, int count);
 extern cJSON *cJSON_CreateFloatArray(const float *numbers,int count);
 extern cJSON *cJSON_CreateDoubleArray(const double *numbers,int count);
 extern cJSON *cJSON_CreateStringArray(const char **strings,int count);

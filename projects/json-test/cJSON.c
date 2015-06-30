@@ -23,6 +23,8 @@
 /* cJSON */
 /* JSON parser in C. */
 
+#include <inttypes.h>  // for PRId64
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -95,7 +97,7 @@ void cJSON_Delete(cJSON *c)
 /* Parse the input text to generate a number, and populate the result into item. */
 static const char *parse_number(cJSON *item,const char *num)
 {
-	double n=0,scale=0;int i=0,sign=1,subscale=0,signsubscale=1;long long ll=0;
+	double n=0,scale=0;int i=0,sign=1,subscale=0,signsubscale=1;int64_t ll=0;
 	int point = 0;
 
 	if (*num=='-') sign=-1,++num;	/* Has sign? */
@@ -114,7 +116,7 @@ static const char *parse_number(cJSON *item,const char *num)
 	}
 	else
 	{
-		if (ll>(long long)INT_MAX || ll<(long long)INT_MIN) { item->valueint64=ll; item->type=cJSON_Int64; }
+		if (ll>(int64_t)INT_MAX || ll<(int64_t)INT_MIN) { item->valueint64=ll; item->type=cJSON_Int64; }
 		else { item->valueint=i; item->type=cJSON_Int; }
 	}
 	return num;
@@ -132,7 +134,7 @@ static char *print_number(cJSON *item)
 			break;
 		case cJSON_Int64:
 			str = (char*)cJSON_malloc(21);	/* 2^64+1 can be represented in 21 chars. */
-			if (str) sprintf(str,"%lld",item->valueint64);
+			if (str) sprintf(str,"%"PRId64,item->valueint64);
 			break;
 		default:
 			str = (char*)cJSON_malloc(64);	/* This is a nice tradeoff. */
@@ -553,7 +555,7 @@ cJSON *cJSON_CreateTrue(void)					{cJSON *item=cJSON_New_Item();if(item)item->ty
 cJSON *cJSON_CreateFalse(void)					{cJSON *item=cJSON_New_Item();if(item)item->type=cJSON_False;return item;}
 cJSON *cJSON_CreateBool(int b)					{cJSON *item=cJSON_New_Item();if(item)item->type=b?cJSON_True:cJSON_False;return item;}
 cJSON *cJSON_CreateInt(int num)					{cJSON *item=cJSON_New_Item();if(item){item->type=cJSON_Int;item->valueint=num;}return item;}
-cJSON *cJSON_CreateInt64(long long num)			{cJSON *item=cJSON_New_Item();if(item){item->type=cJSON_Int64;item->valueint64=num;}return item;}
+cJSON *cJSON_CreateInt64(int64_t num)			{cJSON *item=cJSON_New_Item();if(item){item->type=cJSON_Int64;item->valueint64=num;}return item;}
 cJSON *cJSON_CreateNumber(double num)			{cJSON *item=cJSON_New_Item();if(item){item->type=cJSON_Number;item->valuedouble=num;}return item;}
 cJSON *cJSON_CreateString(const char *string)	{cJSON *item=cJSON_New_Item();if(item){item->type=cJSON_String;item->valuestring=cJSON_strdup(string);}return item;}
 cJSON *cJSON_CreateArray(void)					{cJSON *item=cJSON_New_Item();if(item)item->type=cJSON_Array;return item;}
@@ -561,7 +563,7 @@ cJSON *cJSON_CreateObject(void)					{cJSON *item=cJSON_New_Item();if(item)item->
 
 /* Create Arrays: */
 cJSON *cJSON_CreateIntArray(const int *numbers,int count)		{int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;a && i<count;++i){n=cJSON_CreateInt(numbers[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
-cJSON *cJSON_CreateInt64Array(const long long *numbers,int count)	{int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;a && i<count;++i){n=cJSON_CreateInt64(numbers[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
+cJSON *cJSON_CreateInt64Array(const int64_t *numbers,int count)	{int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;a && i<count;++i){n=cJSON_CreateInt64(numbers[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
 cJSON *cJSON_CreateFloatArray(const float *numbers,int count)	{int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;a && i<count;++i){n=cJSON_CreateNumber(numbers[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
 cJSON *cJSON_CreateDoubleArray(const double *numbers,int count)	{int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;a && i<count;++i){n=cJSON_CreateNumber(numbers[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
 cJSON *cJSON_CreateStringArray(const char **strings,int count)	{int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;a && i<count;++i){n=cJSON_CreateString(strings[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
