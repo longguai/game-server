@@ -97,15 +97,15 @@ namespace jw {
         };
 
         template <>
-        struct JsonValueConstructorImpl<long long> {
-            static cJSON *invoke(long long num) {
+        struct JsonValueConstructorImpl<int64_t> {
+            static cJSON *invoke(int64_t num) {
                 return cJSON_CreateInt64(num);
             }
         };
 
         template <>
-        struct JsonValueConstructorImpl<unsigned long long> {
-            static cJSON *invoke(unsigned long long num) {
+        struct JsonValueConstructorImpl<uint64_t> {
+            static cJSON *invoke(uint64_t num) {
                 return cJSON_CreateInt64(num);
             }
         };

@@ -31,8 +31,10 @@ int main(int argc, char *argv[])
 
     using jw::JSON_Value;
 
-    std::cout << "==========TEST ARRAY AS==========" << std::endl;
+	std::cout << "==========TEST INT64==========" << std::endl;
+	std::cout << JSON_Value(std::numeric_limits<int64_t>::max()).stringfiy() << std::endl;
 
+	std::cout << "==========TEST ARRAY AS==========" << std::endl;
     JSON_Value js;
     js.parse("[\"Sunday\", \"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\", \"Saturday\"]");
     std::cout << js << std::endl;
