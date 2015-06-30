@@ -929,7 +929,7 @@ namespace jw {
         }
 
         // 对键值对的增加
-        template <class _T> void add(const char *key, const _T &value) {
+        template <class _T> void insert(const char *key, const _T &value) {
             if (value == nullptr) return;
             if (_root == nullptr) {
                 _root = cJSON_CreateObject();
@@ -941,7 +941,7 @@ namespace jw {
         }
 
         // 对键值对的增加
-        void add(const char *key, const JSON_Value &value) {
+        void insert(const char *key, const JSON_Value &value) {
             if (value == nullptr) return;
             if (_root == nullptr) {
                 _root = cJSON_CreateObject();
@@ -952,7 +952,7 @@ namespace jw {
         }
 
         // 对键值对的增加
-        void add(const char *key, JSON_Value &&value) {
+        void insert(const char *key, JSON_Value &&value) {
             if (value == nullptr) return;
             if (_root == nullptr) {
                 _root = cJSON_CreateObject();

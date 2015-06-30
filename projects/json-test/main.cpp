@@ -100,9 +100,9 @@ int main(int argc, char *argv[])
 
     std::cout << "==========TEST OBJECT CONSTRUCT==========" << std::endl;
     JSON_Value js11;
-    js11.add("123", JSON_Value("123"));
-    js11.add("456", JSON_Value({1, 2, 3, 4, 5, 6, 7}));
-    js11.add("789", JSON_Value(0.5F));
+    js11.insert("123", JSON_Value("123"));
+    js11.insert("456", JSON_Value({1, 2, 3, 4, 5, 6, 7}));
+    js11.insert("789", JSON_Value(0.5F));
     std::cout << js11 << std::endl;
 
     std::cout << "==========TEST OBEJCT AS==========" << std::endl;
@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
     }
 
     std::cout << (js11 == nullptr)  << (js11 != nullptr) << (nullptr == js11) << (nullptr != js11) << std::endl;
+
     return 0;
 }
 
