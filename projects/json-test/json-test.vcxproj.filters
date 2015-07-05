@@ -7,5 +7,6 @@
   <ItemGroup>
     <ClInclude Include="JsonValue.h" />
     <ClInclude Include="cJSON.h" />
+    <ClInclude Include="cppJSON.hpp" />
   </ItemGroup>
 </Project>
