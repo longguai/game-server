@@ -1,4 +1,26 @@
-﻿#ifndef cppJSON__h
+﻿/*
+  Copyright (c) 2009 Dave Gamble
+ 
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+ 
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+ 
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+*/
+
+#ifndef cppJSON__h
 #define cppJSON__h
 
 #ifdef _MSC_VER
@@ -173,17 +195,20 @@ namespace jw {
         template <class _T>
         explicit BasicJSON<_TRAITS, _ALLOC>(_T &&t) {
             reset();
-            __cpp_basic_json_impl::AssignImpl<_TRAITS, _ALLOC, _T>::invoke(*this, std::forward<_T>(t));
+            __cpp_basic_json_impl::AssignImpl<_TRAITS, _ALLOC,
+                typename std::remove_cv<typename std::remove_reference<_T>::type>::type>::invoke(*this, std::forward<_T>(t));
         }
 
         template <class _T>
         explicit BasicJSON<_TRAITS, _ALLOC>(const std::initializer_list<_T> &l) {
             reset();
+            __cpp_basic_json_impl::AssignImpl<_TRAITS, _ALLOC, std::initializer_list<_T> >::invoke(*this, l);
         }
 
         template <class _T>
         explicit BasicJSON<_TRAITS, _ALLOC>(std::initializer_list<_T> &&l) {
             reset();
+            __cpp_basic_json_impl::AssignImpl<_TRAITS, _ALLOC, std::initializer_list<_T> >::invoke(*this, l);
         }
 
         // 复制构造
@@ -604,41 +629,29 @@ namespace jw {
             return const_reverse_iterator(nullptr);
         }
 
-        template <class _Traits, class _Alloc, class _T>
-        friend struct __cpp_basic_json_impl::AssignImpl;
+        template <class, class, class> friend struct __cpp_basic_json_impl::AssignImpl;
 
-        template <class _Traits, class _Alloc, class _Integer>
-        friend struct __cpp_basic_json_impl::AssignFromIntegerImpl;
+        template <class, class, class> friend struct __cpp_basic_json_impl::AssignFromIntegerImpl;
 
-        template <class _Traits, class _Alloc, class _Float>
-        friend struct __cpp_basic_json_impl::AssignFromFloatImpl;
+        template <class, class, class> friend struct __cpp_basic_json_impl::AssignFromFloatImpl;
 
-        template <class _Traits, class _Alloc, class _String>
-        friend struct __cpp_basic_json_impl::AssignFromStringImpl;
+        template <class, class, class> friend struct __cpp_basic_json_impl::AssignFromStringImpl;
 
-        template <class _Traits, class _Alloc, class _Array>
-        friend struct __cpp_basic_json_impl::AssignFromArrayImpl;
+        template <class, class, class> friend struct __cpp_basic_json_impl::AssignFromArrayImpl;
 
-        template <class _Traits, class _Alloc, class _Map>
-        friend struct __cpp_basic_json_impl::AssignFromMapImpl;
+        template <class, class, class> friend struct __cpp_basic_json_impl::AssignFromMapImpl;
 
-        template <class _Traits, class _Alloc, class _T>
-        friend struct __cpp_basic_json_impl::AsImpl;
+        template <class, class, class> friend struct __cpp_basic_json_impl::AsImpl;
 
-        template <class _Traits, class _Alloc, class _Integer>
-        friend struct __cpp_basic_json_impl::AsIntegerImpl;
+        template <class, class, class> friend struct __cpp_basic_json_impl::AsIntegerImpl;
 
-        template <class _Traits, class _Alloc, class _Float>
-        friend struct __cpp_basic_json_impl::AsFloatImpl;
+        template <class, class, class> friend struct __cpp_basic_json_impl::AsFloatImpl;
 
-        template <class _Traits, class _Alloc, class _String>
-        friend struct __cpp_basic_json_impl::AsStringImpl;
+        template <class, class, class> friend struct __cpp_basic_json_impl::AsStringImpl;
 
-        template <class _Traits, class _Alloc, class _Array>
-        friend struct __cpp_basic_json_impl::AsArrayImpl;
+        template <class, class, class> friend struct __cpp_basic_json_impl::AsArrayImpl;
 
-        template <class _Traits, class _Alloc, class _Map>
-        friend struct __cpp_basic_json_impl::AsMapImpl;
+        template <class, class, class> friend struct __cpp_basic_json_impl::AsMapImpl;
 
     private:
         const char *ep = nullptr;
@@ -957,6 +970,7 @@ namespace jw {
             ret.append(1, '}');
         }
 
+        // TODO:
         static bool Duplicate(ThisType &newitem, const ThisType &item, bool recurse) {
             newitem.clear();
             const ThisType *cptr;
@@ -1031,6 +1045,7 @@ namespace jw {
         template <class _TRAITS, class _ALLOC, class _T>
         void AssignImpl<_TRAITS, _ALLOC, _T>::invoke(typename AssignImpl<_TRAITS, _ALLOC, _T>::JsonType &c,
             typename AssignImpl<_TRAITS, _ALLOC, _T>::SourceType arg) {
+            // TODO:
             //static_assert(0, "unimplemented type");
         }
 
@@ -1134,6 +1149,11 @@ namespace jw {
             : AssignFromStringImpl<_TRAITS, _ALLOC, std::basic_string<char, _TR, _AX> > {
         };
 
+        template <class _TRAITS, class _ALLOC, size_t _N>
+        struct AssignImpl<_TRAITS, _ALLOC, char [_N]>
+            : AssignFromStringImpl<_TRAITS, _ALLOC, char [_N]> {
+        };
+
         template <class _TRAITS, class _ALLOC, class _ARRAY, size_t _N>
         struct AssignImpl<_TRAITS, _ALLOC, _ARRAY [_N]> {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
@@ -1213,6 +1233,16 @@ namespace jw {
             typedef _MAP SourceType;
             static void invoke(JsonType &c, const SourceType &arg) {
                 c->_type = JsonType::ValueType::Object;
+                // TODO:
+            }
+        };
+
+        template <class _TRAITS, class _ALLOC, class _T>
+        struct AssignImpl<_TRAITS, _ALLOC, std::initializer_list<_T> > {
+            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
+            typedef std::initializer_list<_T> SourceType;
+            static void invoke(JsonType &c, const SourceType &arg) {
+                // TODO:
             }
         };
 
@@ -1232,6 +1262,7 @@ namespace jw {
             default: throw std::out_of_range("JSON type out of range"); break;
             }
             TargetType ret = TargetType();
+            // TODO：
             //ss >> ret;
             return ret;
         }
@@ -1331,8 +1362,8 @@ namespace jw {
                 case JsonType::ValueType::Integer: return static_cast<TargetType>(c._valueInt64);
                 case JsonType::ValueType::Float: return static_cast<TargetType>(c._valueDouble);
                 case JsonType::ValueType::String: return static_cast<TargetType>(atof(c._valueString.c_str()));
-                case JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to Integer"); break;
-                case JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to Integer"); break;
+                case JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to Float"); break;
+                case JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to Float"); break;
                 default: throw std::out_of_range("JSON type out of range"); break;
                 }
             }
@@ -1456,9 +1487,9 @@ namespace jw {
                 }
             }
         private:
-            typedef typename TargetType::value_type PairType;
-            inline static PairType _make_value(const JsonType &j) {
-                return PairType(typename PairType::first_type(j._key.begin(), j._key.end()), AsImpl<_TRAITS, _ALLOC, typename PairType::second_type>::invoke(j));
+            inline static typename TargetType::value_type _make_value(const JsonType &j) {
+                return typename TargetType::value_type(typename TargetType::key_type(j._key.begin(), j._key.end()),
+                    AsImpl<_TRAITS, _ALLOC, typename TargetType::mapped_type>::invoke(j));
             }
         };
 

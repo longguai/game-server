@@ -213,6 +213,7 @@ inline bool operator!=(const TestAllocator<_T> &left, const TestAllocator<_Other
 
 #include <algorithm>
 #include <functional>
+
 int main(int argc, char *argv[])
 {
 #if (defined _DEBUG) || (defined DEBUG)
@@ -220,12 +221,9 @@ int main(int argc, char *argv[])
     //_CrtSetBreakAlloc(147);
 #endif
     typedef jw::BasicJSON<TestCharTraits, TestAllocator<char> > cppJSON;
+
     {
-        //using namespace jw;
         cppJSON jv = cppJSON(std::vector<int>({ 1, 2, 3, 4, 5, 6, 7 }));
-        //__cpp_basic_json_impl::AssignImpl<std::char_traits, std::allocator, std::vector<int> >::invoke(jv, std::vector<int>({ 1, 2, 3, 4, 5, 6, 7 }));
-        //std::vector<int> aaa;
-        //std::transform(jv.begin(), jv.end(), std::insert_iterator<std::vector<int> >(aaa, aaa.begin()), std::bind(&cppJSON::as<int>, std::placeholders::_1));
         cppJSON jvt = jv;
 
         cppJSON jvtt = std::move(jvt);
@@ -260,9 +258,9 @@ int main(int argc, char *argv[])
         std::cout << jv.Print() << std::endl;
 
         func2(jv.as<std::map<std::string, std::string> >());
-        //func2(jv.as<std::multimap<std::string, cppJSON> >());
-        //func2(jv.as<std::unordered_map<std::string, cppJSON> >());
-        //func2(jv.as<std::unordered_multimap<std::string, cppJSON> >());
+        func2(jv.as<std::multimap<std::string, std::string> >());
+        func2(jv.as<std::unordered_map<std::string, std::string> >());
+        func2(jv.as<std::unordered_multimap<std::string, std::string> >());
 
         std::unordered_map<int, int> t;
         t.insert(std::unordered_map<int, int>::value_type(1, 1));
@@ -315,15 +313,17 @@ int main(int argc, char *argv[])
     std::cout << "==========TEST STRING CONSTRUCT==========" << std::endl;
     JSON_Value js5("abcd");
     std::cout << js5 << std::endl;
+    // TODO:
+    //std::wcout << js5.as<std::wstring>();// << std::endl;
 
     std::cout << "==========TEST ARRAY CONSTRUCT4==========" << std::endl;
     JSON_Value js6({ 1, 2, 3, 4, 5 });
     std::cout << js6 << std::endl;
 
     std::cout << "==========TEST ARRAY CONSTRUCT5==========" << std::endl;
-    auto a = { "1", "2", "3", "c" };
-    JSON_Value js7(a);
-    std::cout << js7 << std::endl;
+    //auto a = { "1", "2", "3", "c" };
+    //JSON_Value js7(a);
+    //std::cout << js7 << std::endl;
 
     std::cout << "==========TEST ARRAY MERGE==========" << std::endl;
     JSON_Value js8({ "abc" });
