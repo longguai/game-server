@@ -940,7 +940,7 @@ namespace jw {
             // Explicitly handle empty object case
             if (numentries == 0) {
                 ret.append(1, '{');
-                if (fmt) { ret.append(1, '\n'); ret.append(depth - 1, '\t'); }
+                if (fmt) { ret.append(1, '\n'); if (depth > 0) ret.append(depth - 1, '\t'); }
                 ret.append(1, '}');
                 return;
             }
@@ -1233,30 +1233,30 @@ namespace jw {
 
         template <class _TRAITS, class _ALLOC, class _T, class _CMP, class _AX>
         struct AssignImpl<_TRAITS, _ALLOC, std::set<_T, _CMP, _AX> >
-            : public AssignFromArrayImpl<_TRAITS, _ALLOC, std::set<_T, _CMP, _AX> > {
+            : AssignFromArrayImpl<_TRAITS, _ALLOC, std::set<_T, _CMP, _AX> > {
         };
 
         template <class _TRAITS, class _ALLOC, class _T, class _CMP, class _AX>
         struct AssignImpl<_TRAITS, _ALLOC, std::multiset<_T, _CMP, _AX> >
-            : public AssignFromArrayImpl<_TRAITS, _ALLOC, std::multiset<_T, _CMP, _AX> > {
+            : AssignFromArrayImpl<_TRAITS, _ALLOC, std::multiset<_T, _CMP, _AX> > {
         };
 
         template <class _TRAITS, class _ALLOC, class _T, class _HASH, class _EQ, class _AX>
         struct AssignImpl<_TRAITS, _ALLOC, std::unordered_set<_T, _HASH, _EQ, _AX> >
-            : public AssignFromArrayImpl<_TRAITS, _ALLOC, std::unordered_set<_T, _HASH, _EQ, _AX> > {
+            : AssignFromArrayImpl<_TRAITS, _ALLOC, std::unordered_set<_T, _HASH, _EQ, _AX> > {
         };
 
         template <class _TRAITS, class _ALLOC, class _T, class _HASH, class _EQ, class _AX>
         struct AssignImpl<_TRAITS, _ALLOC, std::unordered_multiset<_T, _HASH, _EQ, _AX> >
-            : public AssignFromArrayImpl<_TRAITS, _ALLOC, std::unordered_multiset<_T, _HASH, _EQ, _AX> > {
+            : AssignFromArrayImpl<_TRAITS, _ALLOC, std::unordered_multiset<_T, _HASH, _EQ, _AX> > {
         };
 
         template <class _TRAITS, class _ALLOC, class _MAP>
-        struct AssignImplForMap {
+        struct AssignFromMapImpl {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _MAP SourceType;
             static void invoke(JsonType &c, const SourceType &arg) {
-                c->_type = JsonType::ValueType::Object;
+                c._type = JsonType::ValueType::Object;
                 // TODO:
             }
         };
