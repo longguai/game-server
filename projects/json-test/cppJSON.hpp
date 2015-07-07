@@ -648,7 +648,7 @@ namespace jw {
         const char *ep = nullptr;
         //typename _ALLOC::template rebind<ThisType>::other _allocator;
 
-        static ThisType *New() {
+        static inline ThisType *New() {
             typedef typename _ALLOC::template rebind<ThisType>::other AllocatorType;
             AllocatorType allocator;
             typename AllocatorType::pointer p = allocator.allocate(sizeof(ThisType));
@@ -656,7 +656,7 @@ namespace jw {
             return (ThisType *)p;
         }
 
-        static void Delete(ThisType *c) {
+        static inline void Delete(ThisType *c) {
             typedef typename _ALLOC::template rebind<ThisType>::other AllocatorType;
             AllocatorType allocator;
             allocator.destroy(c);
@@ -986,13 +986,13 @@ namespace jw {
         }
 
     public:
-        std::string Print() const {
+        inline std::string Print() const {
             std::string ret;
             print_value(ret, 0, true);
             return ret;
         }
 
-        std::string PrintUnformatted() const {
+        inline std::string PrintUnformatted() const {
             std::string ret;
             print_value(ret, 0, false);
             return ret;
@@ -1016,7 +1016,7 @@ namespace jw {
 
     // 流输出
     template <class _OS, class _TRAITS, class _ALLOC>
-    static _OS &operator<<(_OS &os, const BasicJSON<_TRAITS, _ALLOC> &c) {
+    static inline _OS &operator<<(_OS &os, const BasicJSON<_TRAITS, _ALLOC> &c) {
         os << c.Print();
         return os;
     }
@@ -1044,7 +1044,7 @@ namespace jw {
 		struct AssignImpl<_TRAITS, _ALLOC, std::nullptr_t> {
 			typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
 			typedef std::nullptr_t SourceType;
-			static void invoke(JsonType &c, SourceType) {
+			static inline void invoke(JsonType &c, SourceType) {
 				c._type = JsonType::ValueType::Null;
 			}
 		};
@@ -1053,7 +1053,7 @@ namespace jw {
 		struct AssignImpl<_TRAITS, _ALLOC, bool> {
 			typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
 			typedef bool SourceType;
-			static void invoke(JsonType &c, bool src) {
+			static inline void invoke(JsonType &c, bool src) {
 				c._type = src ? JsonType::ValueType::True : JsonType::ValueType::False;
 			}
 		};
@@ -1062,7 +1062,7 @@ namespace jw {
         struct AssignFromIntegerImpl {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _INTEGER SourceType;
-            static void invoke(JsonType &c, SourceType arg) {
+            static inline void invoke(JsonType &c, SourceType arg) {
                 c._type = JsonType::ValueType::Integer;
                 c._valueInt64 = arg;
             }
@@ -1127,7 +1127,7 @@ namespace jw {
         struct AssignFromFloatImpl {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _FLOAT SourceType;
-            static void invoke(JsonType &c, SourceType arg) {
+            static inline void invoke(JsonType &c, SourceType arg) {
                 c._type = JsonType::ValueType::Float;
                 c._valueDouble = arg;
             }
@@ -1156,7 +1156,7 @@ namespace jw {
         struct AssignFromStringImpl {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _STRING SourceType;
-            static void invoke(JsonType &c, const SourceType &arg) {
+            static inline void invoke(JsonType &c, const SourceType &arg) {
                 c._type = JsonType::ValueType::String;
                 c._valueString = _ConvertString(arg);
             }
@@ -1547,7 +1547,7 @@ namespace jw {
                 }
             }
         private:
-            inline static typename TargetType::value_type _make_value(const JsonType &j) {
+            static inline typename TargetType::value_type _make_value(const JsonType &j) {
                 return typename TargetType::value_type(typename TargetType::key_type(j._key.begin(), j._key.end()),
                     AsImpl<_TRAITS, _ALLOC, typename TargetType::mapped_type>::invoke(j));
             }
