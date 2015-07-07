@@ -1143,13 +1143,22 @@ namespace jw {
             : AssignFromFloatImpl<_TRAITS, _ALLOC, double> {
         };
 
+        static inline const char *_ConvertString(const char *str) {
+            return str;
+        }
+
+        template <class _TR, class _AX>
+        static inline const char *_ConvertString(const std::basic_string<char, _TR, _AX> &str) {
+            return str.c_str();
+        }
+
         template <class _TRAITS, class _ALLOC, class _STRING>
         struct AssignFromStringImpl {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _STRING SourceType;
             static void invoke(JsonType &c, const SourceType &arg) {
                 c._type = JsonType::ValueType::String;
-                c._valueString = arg;
+                c._valueString = _ConvertString(arg);
             }
         };
 
@@ -1169,14 +1178,8 @@ namespace jw {
 		};
 
 		template <class _TRAITS, class _ALLOC, class _TR, class _AX>
-        struct AssignImpl<_TRAITS, _ALLOC, std::basic_string<char, _TR, _AX> > {
-			typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-			typedef std::basic_string<char, _TR, _AX> SourceType;
-			static void invoke(JsonType &c, const SourceType &arg) {
-				c._type = JsonType::ValueType::String;
-				// 这里由于SourceType的char_traits和allocator跟Json中使用的可能不同，不能直接赋值
-				c._valueString = arg.c_str();
-			}
+        struct AssignImpl<_TRAITS, _ALLOC, std::basic_string<char, _TR, _AX> >
+            : AssignFromStringImpl<_TRAITS, _ALLOC, std::basic_string<char, _TR, _AX> > {
         };
 
         template <class _TRAITS, class _ALLOC, class _ARRAY, size_t _N>
@@ -1184,6 +1187,7 @@ namespace jw {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _ARRAY SourceType[_N];
             static void invoke(JsonType &c, const SourceType &arg) {
+                c._type = JsonType::ValueType::Array;
                 JsonType *prev = nullptr;
                 for (size_t i = 0; i < _N; ++i) {
                     JsonType *item = JsonType::New();
@@ -1196,7 +1200,6 @@ namespace jw {
                     }
                     prev = item;
                 }
-                c._type = JsonType::ValueType::Array;
             }
         };
 
@@ -1205,6 +1208,7 @@ namespace jw {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _ARRAY SourceType;
             static void invoke(JsonType &c, const SourceType &arg) {
+                c._type = JsonType::ValueType::Array;
                 JsonType *prev = nullptr;
                 for (typename SourceType::const_iterator it = arg.begin(); it != arg.end(); ++it) {
                     JsonType *item = JsonType::New();
@@ -1217,7 +1221,6 @@ namespace jw {
                     }
                     prev = item;
                 }
-                c._type = JsonType::ValueType::Array;
             }
         };
 
@@ -1256,9 +1259,42 @@ namespace jw {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _MAP SourceType;
             static void invoke(JsonType &c, const SourceType &arg) {
+                static_assert(std::is_convertible<const char *, typename _MAP::key_type>::value, "key_type must be able to convert to const char *");
                 c._type = JsonType::ValueType::Object;
-                // TODO:
+                JsonType *prev = nullptr;
+                for (typename SourceType::const_iterator it = arg.begin(); it != arg.end(); ++it) {
+                    JsonType *item = JsonType::New();
+                    item->_key = _ConvertString(it->first);
+                    AssignImpl<_TRAITS, _ALLOC, typename _MAP::mapped_type>::invoke(*item, it->second);
+                    if (it != arg.begin()) {
+                        prev->_next = item;
+                        item->_prev = prev;
+                    } else {
+                        c._child = item;
+                    }
+                    prev = item;
+                }
             }
+        };
+
+        template <class _TRAITS, class _ALLOC, class _KEY, class _VAL, class _CMP, class _AX>
+        struct AssignImpl<_TRAITS, _ALLOC, std::map<_KEY, _VAL, _CMP, _AX> >
+            : AssignFromMapImpl<_TRAITS, _ALLOC, std::map<_KEY, _VAL, _CMP, _AX> > {
+        };
+
+        template <class _TRAITS, class _ALLOC, class _KEY, class _VAL, class _CMP, class _AX>
+        struct AssignImpl<_TRAITS, _ALLOC, std::multimap<_KEY, _VAL, _CMP, _AX> >
+            : AssignFromMapImpl<_TRAITS, _ALLOC, std::multimap<_KEY, _VAL, _CMP, _AX> > {
+        };
+
+        template <class _TRAITS, class _ALLOC, class _KEY, class _VAL, class _HASH, class _EQ, class _AX>
+        struct AssignImpl<_TRAITS, _ALLOC, std::unordered_map<_KEY, _VAL, _HASH, _EQ, _AX> >
+            : AssignFromMapImpl<_TRAITS, _ALLOC, std::unordered_map<_KEY, _VAL, _HASH, _EQ, _AX> > {
+        };
+
+        template <class _TRAITS, class _ALLOC, class _KEY, class _VAL, class _HASH, class _EQ, class _AX>
+        struct AssignImpl<_TRAITS, _ALLOC, std::unordered_multimap<_KEY, _VAL, _HASH, _EQ, _AX> >
+            : AssignFromMapImpl<_TRAITS, _ALLOC, std::unordered_multimap<_KEY, _VAL, _HASH, _EQ, _AX> > {
         };
 
         template <class _TRAITS, class _ALLOC, class _T>
