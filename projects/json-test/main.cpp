@@ -213,6 +213,7 @@ inline bool operator!=(const TestAllocator<_T> &left, const TestAllocator<_Other
 
 #include <algorithm>
 #include <functional>
+#include <stdbool.h>
 
 int main(int argc, char *argv[])
 {
@@ -222,7 +223,45 @@ int main(int argc, char *argv[])
 #endif
     typedef jw::BasicJSON<TestCharTraits, TestAllocator<char> > cppJSON;
 
-    {
+	std::cout << "==========Construct From BasicTypes==========" << std::endl;
+	std::cout << cppJSON() << std::endl;
+	std::cout << cppJSON(nullptr) << std::endl;
+	std::cout << cppJSON(true) << std::endl;
+	std::cout << cppJSON(false) << std::endl;
+	std::cout << cppJSON(std::numeric_limits<unsigned>::max()) << std::endl;
+	std::cout << cppJSON(std::numeric_limits<int64_t>::max()) << std::endl;
+	std::cout << cppJSON(0.5F) << std::endl;
+	std::cout << cppJSON(3.14) << std::endl;
+
+	std::cout << "==========Construct From String==========" << std::endl;
+	std::cout << cppJSON("abcd") << std::endl;
+	const char *str1 = "qwer";
+	std::cout << cppJSON(str1) << std::endl;
+	const char str2[] = "abcd";
+	std::cout << cppJSON(str2) << std::endl;
+	char str3[] = "zxcv";
+	std::cout << cppJSON(str3) << std::endl;
+	char *str4 = str3;
+	std::cout << cppJSON(str4) << std::endl;
+	std::cout << cppJSON(std::string("123")) << std::endl;
+
+	std::cout << "==========Construct From Array==========" << std::endl;
+	std::cout << cppJSON(std::vector<int>({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 })) << std::endl;
+	std::cout << cppJSON(std::list<double>({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 })) << std::endl;
+	const float arr[] = { 0, 1, 2, 3, 4, 5 };
+	std::cout << cppJSON(arr) << std::endl;
+	unsigned uarr[] = { 10, 9, 8, 7, 6 };
+	std::cout << cppJSON(uarr) << std::endl;
+
+    std::cout << cppJSON({ 1, 2, 3, 4, 5 }) << std::endl;
+	auto initList = { "1", "2", "3", "c" };
+	std::cout << cppJSON(initList) << std::endl;
+
+	// TODO:
+	//std::wcout << js5.as<std::wstring>();// << std::endl;
+
+	std::cout << "==========Construct From Array End==========" << std::endl;
+	{
         cppJSON jv = cppJSON(std::vector<int>({ 1, 2, 3, 4, 5, 6, 7 }));
         cppJSON jvt = jv;
 
@@ -269,9 +308,6 @@ int main(int argc, char *argv[])
     //using jw::JSON_Value;
     typedef cppJSON JSON_Value;
 
-    std::cout << "==========TEST INT64==========" << std::endl;
-    std::cout << JSON_Value(std::numeric_limits<int64_t>::max()).stringfiy() << std::endl;
-
     std::cout << "==========TEST ARRAY AS==========" << std::endl;
     JSON_Value js;
     js.Parse("[\"Sunday\", \"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\", \"Saturday\"]");
@@ -296,34 +332,6 @@ int main(int argc, char *argv[])
     //js1.merge(temp);
     std::cout << js1 << std::endl;
     //func2(js1.as<std::map<std::string, JSON_Value> >());
-
-    std::cout << "==========TEST ARRAY CONSTRUCT1==========" << std::endl;
-    JSON_Value js2(std::vector<int>({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }));
-    std::cout << js2 << std::endl;
-
-    std::cout << "==========TEST ARRAY CONSTRUCT2==========" << std::endl;
-    JSON_Value js3(std::list<double>({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }));
-    std::cout << js3 << std::endl;
-
-    std::cout << "==========TEST ARRAY CONSTRUCT3==========" << std::endl;
-    const float arr[] = { 0, 1, 2, 3, 4, 5 };
-    JSON_Value js4(arr);
-    std::cout << js4 << std::endl;
-
-    std::cout << "==========TEST STRING CONSTRUCT==========" << std::endl;
-    JSON_Value js5("abcd");
-    std::cout << js5 << std::endl;
-    // TODO:
-    //std::wcout << js5.as<std::wstring>();// << std::endl;
-
-    std::cout << "==========TEST ARRAY CONSTRUCT4==========" << std::endl;
-    JSON_Value js6({ 1, 2, 3, 4, 5 });
-    std::cout << js6 << std::endl;
-
-    std::cout << "==========TEST ARRAY CONSTRUCT5==========" << std::endl;
-    //auto a = { "1", "2", "3", "c" };
-    //JSON_Value js7(a);
-    //std::cout << js7 << std::endl;
 
     std::cout << "==========TEST ARRAY MERGE==========" << std::endl;
     JSON_Value js8({ "abc" });
