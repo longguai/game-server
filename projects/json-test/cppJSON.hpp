@@ -59,49 +59,29 @@ namespace jw {
 
     namespace __cpp_basic_json_impl {
 
-        template <class _TRAITS, class _ALLOC, class _T>
-        struct AssignImpl {
+        template <class _TRAITS, class _ALLOC, class _T> struct AssignImpl {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _T SourceType;
             static void invoke(JsonType &c, SourceType arg);
         };
 
-        template <class _TRAITS, class _ALLOC, class _INTEGER>
-        struct AssignFromIntegerImpl;
+        template <class _TRAITS, class _ALLOC, class _INTEGER> struct AssignFromIntegerImpl;
+        template <class _TRAITS, class _ALLOC, class _FLOAT> struct AssignFromFloatImpl;
+		template <class _TRAITS, class _ALLOC, class _STRING> struct AssignFromStringImpl;
+		template <class _TRAITS, class _ALLOC, class _ARRAY> struct AssignFromArrayImpl;
+        template <class _TRAITS, class _ALLOC, class _MAP> struct AssignFromMapImpl;
 
-        template <class _TRAITS, class _ALLOC, class _FLOAT>
-        struct AssignFromFloatImpl;
-
-		template <class _TRAITS, class _ALLOC, class _STRING>
-		struct AssignFromStringImpl;
-
-		template <class _TRAITS, class _ALLOC, class _ARRAY>
-        struct AssignFromArrayImpl;
-
-        template <class _TRAITS, class _ALLOC, class _MAP>
-        struct AssignFromMapImpl;
-
-        template <class _TRAITS, class _ALLOC, class _T>
-        struct AsImpl {
+        template <class _TRAITS, class _ALLOC, class _T> struct AsImpl {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _T TargetType;
             static TargetType invoke(const JsonType &c);
         };
 
-        template <class _TRAITS, class _ALLOC, class _INTEGER>
-        struct AsIntegerImpl;
-
-        template <class _TRAITS, class _ALLOC, class _FLOAT>
-        struct AsFloatImpl;
-
-        template <class _TRAITS, class _ALLOC, class _STRING>
-        struct AsStringImpl;
-
-        template <class _TRAITS, class _ALLOC, class _ARRAY>
-        struct AsArrayImpl;
-
-        template <class _TRAITS, class _ALLOC, class _MAP>
-        struct AsMapImpl;
+        template <class _TRAITS, class _ALLOC, class _INTEGER> struct AsIntegerImpl;
+        template <class _TRAITS, class _ALLOC, class _FLOAT> struct AsFloatImpl;
+        template <class _TRAITS, class _ALLOC, class _STRING> struct AsStringImpl;
+        template <class _TRAITS, class _ALLOC, class _ARRAY> struct AsArrayImpl;
+        template <class _TRAITS, class _ALLOC, class _MAP> struct AsMapImpl;
     }
 
     template <class _TRAITS, class _ALLOC>
@@ -285,8 +265,7 @@ namespace jw {
             friend class reverse_iterator;
             ThisType *_ptr;
 
-            iterator(ThisType *ptr) throw() : _ptr(ptr) {
-            }
+            iterator(ThisType *ptr) throw() : _ptr(ptr) { }
 
         public:
             typedef std::bidirectional_iterator_tag iterator_category;
@@ -296,38 +275,23 @@ namespace jw {
             typedef value_type *pointer;
             typedef value_type &reference;
 
-            iterator() throw() : _ptr(nullptr) {
-            }
-
-            iterator(const iterator &other) throw() : _ptr(other._ptr) {
-            }
+            iterator() throw() : _ptr(nullptr) { }
+            iterator(const iterator &other) throw() : _ptr(other._ptr) { }
 
             iterator &operator=(const iterator &other) throw() {
                 _ptr = other._ptr;
                 return *this;
             }
 
-            inline ThisType &operator*() throw() {
-                return *_ptr;
-            }
-
-            inline const ThisType &operator*() const throw() {
-                return *_ptr;
-            }
-
-            inline ThisType *operator->() throw() {
-                return _ptr;
-            }
-
-            inline const ThisType *operator->() const throw() {
-                return _ptr;
-            }
+            inline reference operator*() throw() { return *_ptr; }
+            inline const reference operator*() const throw() { return *_ptr; }
+            inline pointer operator->() throw() { return _ptr; }
+            inline const pointer operator->() const throw() { return _ptr; }
 
             inline iterator &operator++() throw() {
                 _ptr = _ptr->_next;
                 return *this;
             }
-
             inline iterator operator++(int) throw() {
                 iterator ret(this);
                 _ptr = _ptr->_next;
@@ -338,20 +302,14 @@ namespace jw {
                 _ptr = _ptr->_prev;
                 return *this;
             }
-
             inline iterator operator--(int) throw() {
                 iterator ret(this);
                 _ptr = _ptr->_prev;
                 return ret;
             }
 
-            inline bool operator==(const iterator &other) const throw() {
-                return _ptr == other._ptr;
-            }
-
-            inline bool operator!=(const iterator &other) const throw() {
-                return _ptr != other._ptr;
-            }
+            inline bool operator==(const iterator &other) const throw() { return _ptr == other._ptr; }
+            inline bool operator!=(const iterator &other) const throw() { return _ptr != other._ptr; }
         };
 
         typedef std::reverse_iterator<iterator> reverse_iterator;
@@ -366,36 +324,27 @@ namespace jw {
 
         public:
             typedef std::bidirectional_iterator_tag iterator_category;
-            typedef ThisType value_type;
+            typedef const ThisType value_type;
             typedef ptrdiff_t difference_type;
             typedef difference_type distance_type;
             typedef value_type *pointer;
             typedef value_type &reference;
 
-            const_iterator() throw() : _ptr(nullptr) {
-            }
-
-            const_iterator(const const_iterator &other) throw() : _ptr(other._ptr) {
-            }
+            const_iterator() throw() : _ptr(nullptr) { }
+            const_iterator(const const_iterator &other) throw() : _ptr(other._ptr) { }
 
             const_iterator &operator=(const const_iterator &other) throw() {
                 _ptr = other._ptr;
                 return *this;
             }
 
-            inline const ThisType &operator*() const throw() {
-                return *_ptr;
-            }
-
-            inline const ThisType *operator->() const throw() {
-                return _ptr;
-            }
+            inline reference &operator*() const throw() { return *_ptr; }
+            inline pointer *operator->() const throw() { return _ptr; }
 
             inline const_iterator &operator++() throw() {
                 _ptr = _ptr->_next;
                 return *this;
             }
-
             inline const_iterator operator++(int) throw() {
                 const_iterator ret(this);
                 _ptr = _ptr->_next;
@@ -406,20 +355,14 @@ namespace jw {
                 _ptr = _ptr->_prev;
                 return *this;
             }
-
             inline const_iterator operator--(int) throw() {
                 const_iterator ret(this);
                 _ptr = _ptr->_prev;
                 return ret;
             }
 
-            inline bool operator==(const const_iterator &other) const throw() {
-                return _ptr == other._ptr;
-            }
-
-            inline bool operator!=(const const_iterator &other) const throw() {
-                return _ptr != other._ptr;
-            }
+            inline bool operator==(const const_iterator &other) const throw() { return _ptr == other._ptr; }
+            inline bool operator!=(const const_iterator &other) const throw() { return _ptr != other._ptr; }
         };
 
         typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
@@ -904,8 +847,7 @@ namespace jw {
             //static_assert(0, "unimplemented type");
         }
 
-		template <class _TRAITS, class _ALLOC>
-		struct AssignImpl<_TRAITS, _ALLOC, std::nullptr_t> {
+		template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, std::nullptr_t> {
 			typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
 			typedef std::nullptr_t SourceType;
 			static inline void invoke(JsonType &c, SourceType) {
@@ -913,8 +855,7 @@ namespace jw {
 			}
 		};
 
-		template <class _TRAITS, class _ALLOC>
-		struct AssignImpl<_TRAITS, _ALLOC, bool> {
+		template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, bool> {
 			typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
 			typedef bool SourceType;
 			static inline void invoke(JsonType &c, bool src) {
@@ -922,8 +863,7 @@ namespace jw {
 			}
 		};
 
-		template <class _TRAITS, class _ALLOC, class _INTEGER>
-        struct AssignFromIntegerImpl {
+		template <class _TRAITS, class _ALLOC, class _INTEGER> struct AssignFromIntegerImpl {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _INTEGER SourceType;
             static inline void invoke(JsonType &c, SourceType arg) {
@@ -932,63 +872,30 @@ namespace jw {
             }
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, char>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, char> {
-        };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, char>
+            : AssignFromIntegerImpl<_TRAITS, _ALLOC, char> { };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, signed char>
+            : AssignFromIntegerImpl<_TRAITS, _ALLOC, signed char> { };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, unsigned char>
+            : AssignFromIntegerImpl<_TRAITS, _ALLOC, unsigned char> { };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, short>
+            : AssignFromIntegerImpl<_TRAITS, _ALLOC, short> { };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, unsigned short>
+            : AssignFromIntegerImpl<_TRAITS, _ALLOC, unsigned short> { };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, int>
+            : AssignFromIntegerImpl<_TRAITS, _ALLOC, int> { };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, unsigned>
+            : AssignFromIntegerImpl<_TRAITS, _ALLOC, unsigned> { };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, long>
+            : AssignFromIntegerImpl<_TRAITS, _ALLOC, long> { };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, unsigned long>
+            : AssignFromIntegerImpl<_TRAITS, _ALLOC, unsigned long> { };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, int64_t>
+            : AssignFromIntegerImpl<_TRAITS, _ALLOC, int64_t> { };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, uint64_t>
+            : AssignFromIntegerImpl<_TRAITS, _ALLOC, uint64_t> { };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, signed char>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, signed char> {
-        };
-
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, unsigned char>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, unsigned char> {
-        };
-
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, short>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, short> {
-        };
-
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, unsigned short>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, unsigned short> {
-        };
-
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, int>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, int> {
-        };
-
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, unsigned>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, unsigned> {
-        };
-
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, long>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, long> {
-        };
-
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, unsigned long>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, unsigned long> {
-        };
-
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, int64_t>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, int64_t> {
-        };
-
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, uint64_t>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, uint64_t> {
-        };
-
-        template <class _TRAITS, class _ALLOC, class _FLOAT>
-        struct AssignFromFloatImpl {
+        template <class _TRAITS, class _ALLOC, class _FLOAT> struct AssignFromFloatImpl {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _FLOAT SourceType;
             static inline void invoke(JsonType &c, SourceType arg) {
@@ -997,15 +904,10 @@ namespace jw {
             }
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, float>
-            : AssignFromFloatImpl<_TRAITS, _ALLOC, float> {
-        };
-
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, double>
-            : AssignFromFloatImpl<_TRAITS, _ALLOC, double> {
-        };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, float>
+            : AssignFromFloatImpl<_TRAITS, _ALLOC, float> { };
+        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, double>
+            : AssignFromFloatImpl<_TRAITS, _ALLOC, double> { };
 
         static inline const char *_ConvertString(const char *str) {
             return str;
@@ -1016,8 +918,7 @@ namespace jw {
             return str.c_str();
         }
 
-        template <class _TRAITS, class _ALLOC, class _STRING>
-        struct AssignFromStringImpl {
+        template <class _TRAITS, class _ALLOC, class _STRING> struct AssignFromStringImpl {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
             typedef _STRING SourceType;
             static inline void invoke(JsonType &c, const SourceType &arg) {
@@ -1026,25 +927,18 @@ namespace jw {
             }
         };
 
-		template <class _TRAITS, class _ALLOC, size_t _N>
-        struct AssignImpl<_TRAITS, _ALLOC, char [_N]>
-            : AssignFromStringImpl<_TRAITS, _ALLOC, char [_N]> {
-        };
+		template <class _TRAITS, class _ALLOC, size_t _N> struct AssignImpl<_TRAITS, _ALLOC, char [_N]>
+            : AssignFromStringImpl<_TRAITS, _ALLOC, char [_N]> { };
 
-		template <class _TRAITS, class _ALLOC>
-		struct AssignImpl<_TRAITS, _ALLOC, char *>
-			: AssignFromStringImpl<_TRAITS, _ALLOC, char *> {
-		};
+		template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, char *>
+			: AssignFromStringImpl<_TRAITS, _ALLOC, char *> { };
 
-		template <class _TRAITS, class _ALLOC>
-		struct AssignImpl<_TRAITS, _ALLOC, const char *>
-			: AssignFromStringImpl<_TRAITS, _ALLOC, const char *> {
-		};
+		template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, const char *>
+			: AssignFromStringImpl<_TRAITS, _ALLOC, const char *> { };
 
 		template <class _TRAITS, class _ALLOC, class _TR, class _AX>
         struct AssignImpl<_TRAITS, _ALLOC, std::basic_string<char, _TR, _AX> >
-            : AssignFromStringImpl<_TRAITS, _ALLOC, std::basic_string<char, _TR, _AX> > {
-        };
+            : AssignFromStringImpl<_TRAITS, _ALLOC, std::basic_string<char, _TR, _AX> > { };
 
         template <class _TRAITS, class _ALLOC>
         struct AssignImpl<_TRAITS, _ALLOC, std::basic_string<char, _TRAITS, _ALLOC> > {
@@ -1054,17 +948,16 @@ namespace jw {
                 c._type = JsonType::ValueType::String;
                 c._valueString = arg;
             }
-
             static inline void invoke(JsonType &c, SourceType &&arg) {
                 c._type = JsonType::ValueType::String;
                 c._valueString = std::move(arg);
             }
         };
 
-        template <class _TRAITS, class _ALLOC, class _ARRAY, size_t _N>
-        struct AssignImpl<_TRAITS, _ALLOC, _ARRAY [_N]> {
+        template <class _TRAITS, class _ALLOC, class _ELEM, size_t _N>
+        struct AssignImpl<_TRAITS, _ALLOC, _ELEM [_N]> {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _ARRAY SourceType[_N];
+            typedef _ELEM SourceType[_N];
             static void invoke(JsonType &c, const SourceType &arg) {
                 c._type = JsonType::ValueType::Array;
                 c._child = JsonType::New();
@@ -1072,7 +965,7 @@ namespace jw {
                 prev->_next = prev->_prev = prev;
                 for (size_t i = 0; i < _N; ++i) {
                     JsonType *item = JsonType::New();
-                    AssignImpl<_TRAITS, _ALLOC, _ARRAY>::invoke(*item, arg[i]);
+                    AssignImpl<_TRAITS, _ALLOC, _ELEM>::invoke(*item, arg[i]);
                     prev->_next = item;
                     item->_prev = prev;
                     item->_next = c._child;
@@ -1081,7 +974,6 @@ namespace jw {
                     prev = item;
                 }
             }
-
             static void invoke(JsonType &c, SourceType &&arg) {
                 c._type = JsonType::ValueType::Array;
                 c._child = JsonType::New();
@@ -1089,7 +981,7 @@ namespace jw {
                 prev->_next = prev->_prev = prev;
                 for (size_t i = 0; i < _N; ++i) {
                     JsonType *item = JsonType::New();
-                    AssignImpl<_TRAITS, _ALLOC, _ARRAY>::invoke(*item, std::move(arg[i]));
+                    AssignImpl<_TRAITS, _ALLOC, _ELEM>::invoke(*item, std::move(arg[i]));
                     prev->_next = item;
                     item->_prev = prev;
                     item->_next = c._child;
