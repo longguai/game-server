@@ -20,8 +20,8 @@
   THE SOFTWARE.
 */
 
-#ifndef cppJSON__h
-#define cppJSON__h
+#ifndef __cppJSON__h__
+#define __cppJSON__h__
 
 #ifdef _MSC_VER
 #   pragma warning(push)
@@ -631,10 +631,10 @@ namespace jw {
             ThisType *child;
             if (*value != '[')  { ep = value; return nullptr; } // not an array!
 
-            _type = ValueType::Array;
             value = skip(value + 1);
             if (*value == ']') return value + 1;    // empty array.
 
+            _type = ValueType::Array;
             this->_child = New();
             if (this->_child == nullptr) return nullptr;        // memory fail
             this->_child->_next = child = New();
@@ -643,6 +643,7 @@ namespace jw {
             if (value == nullptr) return nullptr;
             child->_next = this->_child;
             child->_prev = this->_child;
+            ++this->_child->_valueInt64;
 
             while (*value == ',') {
                 ThisType *new_item = New();
@@ -662,16 +663,18 @@ namespace jw {
         // Build an object from the text.
         const char *parse_object(const char *value) {
             if (*value != '{')  { ep = value; return nullptr; } // not an object!
-            _type = ValueType::Object;
+
             value = skip(value + 1);
             if (*value == '}') return value + 1;    // empty array.
 
+            _type = ValueType::Object;
             ThisType *child;
             this->_child = New();
             if (this->_child == nullptr) return nullptr;        // memory fail
             this->_child->_next = child = New();
             if (child == nullptr) return nullptr;        // memory fail
             value = skip(child->parse_string(skip(value)));
+            child->_type = ValueType::Null;
             if (value == nullptr) return nullptr;
             child->_key = std::move(child->_valueString); child->_valueString.clear();
             if (*value != ':') { ep = value; return nullptr; }  // fail!
@@ -679,12 +682,14 @@ namespace jw {
             if (value == nullptr) return nullptr;
             child->_next = this->_child;
             child->_prev = this->_child;
+            ++this->_child->_valueInt64;
 
             while (*value == ',') {
                 ThisType *new_item = New();
                 if (new_item == nullptr)   return nullptr; // memory fail
                 child->_next = new_item; new_item->_prev = child; child = new_item;
                 value = skip(child->parse_string(skip(value + 1)));
+                child->_type = ValueType::Null;
                 if (value == nullptr) return nullptr;
                 child->_key = std::move(child->_valueString); child->_valueString.clear();
                 if (*value != ':') { ep = value; return nullptr; }  // fail!
@@ -799,8 +804,8 @@ namespace jw {
             }
 
             // Compose the output:
-            ThisType *child = _child;
-            child = _child; ++depth;
+            ThisType *child = _child->_next;
+            ++depth;
             ret.append(1, '{'); if (fmt) ret.append(1, '\n');
             for (size_t i = 0; i < numentries; ++i) {
                 if (fmt) ret.append(depth, '\t');
