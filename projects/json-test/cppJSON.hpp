@@ -1182,6 +1182,21 @@ namespace jw {
             : AssignFromStringImpl<_TRAITS, _ALLOC, std::basic_string<char, _TR, _AX> > {
         };
 
+        template <class _TRAITS, class _ALLOC>
+        struct AssignImpl<_TRAITS, _ALLOC, std::basic_string<char, _TRAITS, _ALLOC> > {
+            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
+            typedef std::basic_string<char, _TRAITS, _ALLOC> SourceType;
+            static inline void invoke(JsonType &c, const SourceType &arg) {
+                c._type = JsonType::ValueType::String;
+                c._valueString = arg;
+            }
+
+            static inline void invoke(JsonType &c, SourceType &&arg) {
+                c._type = JsonType::ValueType::String;
+                c._valueString = std::move(arg);
+            }
+        };
+
         template <class _TRAITS, class _ALLOC, class _ARRAY, size_t _N>
         struct AssignImpl<_TRAITS, _ALLOC, _ARRAY [_N]> {
             typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
@@ -1192,6 +1207,22 @@ namespace jw {
                 for (size_t i = 0; i < _N; ++i) {
                     JsonType *item = JsonType::New();
                     AssignImpl<_TRAITS, _ALLOC, _ARRAY>::invoke(*item, arg[i]);
+                    if (i != 0) {
+                        prev->_next = item;
+                        item->_prev = prev;
+                    } else {
+                        c._child = item;
+                    }
+                    prev = item;
+                }
+            }
+
+            static void invoke(JsonType &c, SourceType &&arg) {
+                c._type = JsonType::ValueType::Array;
+                JsonType *prev = nullptr;
+                for (size_t i = 0; i < _N; ++i) {
+                    JsonType *item = JsonType::New();
+                    AssignImpl<_TRAITS, _ALLOC, _ARRAY>::invoke(*item, std::move(arg[i]));
                     if (i != 0) {
                         prev->_next = item;
                         item->_prev = prev;
@@ -1213,6 +1244,22 @@ namespace jw {
                 for (typename SourceType::const_iterator it = arg.begin(); it != arg.end(); ++it) {
                     JsonType *item = JsonType::New();
                     AssignImpl<_TRAITS, _ALLOC, typename _ARRAY::value_type>::invoke(*item, *it);
+                    if (it != arg.begin()) {
+                        prev->_next = item;
+                        item->_prev = prev;
+                    } else {
+                        c._child = item;
+                    }
+                    prev = item;
+                }
+            }
+
+            static void invoke(JsonType &c, SourceType &&arg) {
+                c._type = JsonType::ValueType::Array;
+                JsonType *prev = nullptr;
+                for (typename SourceType::iterator it = arg.begin(); it != arg.end(); ++it) {
+                    JsonType *item = JsonType::New();
+                    AssignImpl<_TRAITS, _ALLOC, typename _ARRAY::value_type>::invoke(*item, std::move(*it));
                     if (it != arg.begin()) {
                         prev->_next = item;
                         item->_prev = prev;
@@ -1266,6 +1313,24 @@ namespace jw {
                     JsonType *item = JsonType::New();
                     item->_key = _ConvertString(it->first);
                     AssignImpl<_TRAITS, _ALLOC, typename _MAP::mapped_type>::invoke(*item, it->second);
+                    if (it != arg.begin()) {
+                        prev->_next = item;
+                        item->_prev = prev;
+                    } else {
+                        c._child = item;
+                    }
+                    prev = item;
+                }
+            }
+
+            static void invoke(JsonType &c, SourceType &&arg) {
+                static_assert(std::is_convertible<const char *, typename _MAP::key_type>::value, "key_type must be able to convert to const char *");
+                c._type = JsonType::ValueType::Object;
+                JsonType *prev = nullptr;
+                for (typename SourceType::iterator it = arg.begin(); it != arg.end(); ++it) {
+                    JsonType *item = JsonType::New();
+                    item->_key = _ConvertString(it->first);
+                    AssignImpl<_TRAITS, _ALLOC, typename _MAP::mapped_type>::invoke(*item, std::move(it->second));
                     if (it != arg.begin()) {
                         prev->_next = item;
                         item->_prev = prev;
@@ -1485,7 +1550,7 @@ namespace jw {
                 case JsonType::ValueType::String: throw std::logic_error("Cannot convert JSON_String to Array"); break;
                 case JsonType::ValueType::Array: {
                     TargetType ret = TargetType();
-                    std::transform(c.begin(), c.end(), std::insert_iterator<TargetType>(ret, ret.begin()),
+                    std::transform(c.begin(), c.end(), std::inserter(ret, ret.begin()),
                         &AsImpl<_TRAITS, _ALLOC, typename TargetType::value_type>::invoke);
                     return ret;
                 }
@@ -1540,7 +1605,7 @@ namespace jw {
                 case JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to Object"); break;
                 case JsonType::ValueType::Object: {
                     TargetType ret = TargetType();
-                    std::transform(c.begin(), c.end(), std::insert_iterator<TargetType>(ret, ret.begin()), &_make_value);
+                    std::transform(c.begin(), c.end(), std::inserter(ret, ret.begin()), &_make_value);
                     return ret;
                 }
                 default: throw std::out_of_range("JSON type out of range"); break;

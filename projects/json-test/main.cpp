@@ -238,6 +238,7 @@ int main(int argc, char *argv[])
 	char *str4 = str3;
 	std::cout << cppJSON(str4) << std::endl;
 	std::cout << cppJSON(std::string("123")) << std::endl;
+    std::cout << cppJSON(cppJSON::StringType("567")) << std::endl;
 
 	std::cout << "==========Construct From Array==========" << std::endl;
 	std::cout << cppJSON(std::vector<int>({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 })) << std::endl;
@@ -246,6 +247,10 @@ int main(int argc, char *argv[])
 	std::cout << cppJSON(arr) << std::endl;
 	unsigned uarr[] = { 10, 9, 8, 7, 6 };
 	std::cout << cppJSON(uarr) << std::endl;
+    //std::cout << cppJSON(std::move(uarr)) << std::endl;
+    std::vector<cppJSON::StringType> sarr = {"abc", "def", "ghi"};
+    std::cout << cppJSON(sarr) << std::endl;
+    std::cout << cppJSON(std::move(sarr)) << std::endl;
 
     std::cout << cppJSON({ 1, 2, 3, 4, 5 }) << std::endl;
 	auto initList = { "1", "2", "3", "c" };
@@ -253,7 +258,7 @@ int main(int argc, char *argv[])
 
     std::cout << "==========Construct From Map==========" << std::endl;
     std::cout << cppJSON(std::map<const char *, int>({ { "a", 1 }, { "b", 2 }, { "c", 3 }, { "d", 4 }, { "e", 5 } })) << std::endl;
-    std::cout << cppJSON(std::multimap<cppJSON::StringType, int>({ { "a", 1 }, { "b", 2 }, { "c", 3 }, { "d", 4 }, { "e", 5 } })) << std::endl;
+    std::cout << cppJSON(std::multimap<cppJSON::StringType, cppJSON::StringType>({ { "a", "a" }, { "b", "b" }, { "c", "c" }, { "d", "d" }, { "e", "e" } })) << std::endl;
     std::cout << cppJSON(std::unordered_map<std::string, int>({ { "a", 1 }, { "b", 2 }, { "c", 3 }, { "d", 4 }, { "e", 5 } })) << std::endl;
 	// TODO:
 	//std::wcout << js5.as<std::wstring>();// << std::endl;
