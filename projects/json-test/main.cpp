@@ -147,14 +147,16 @@ template <class _T> struct TestAllocator {
     void deallocate(pointer ptr, size_type) {
         //delete ptr;
         //free(ptr);
-        ::HeapFree(::GetProcessHeap(), 0, ptr);
+        //::HeapFree(::GetProcessHeap(), 0, ptr);
+        free(ptr);
     }
 
     // allocate array of cnt elements
     pointer allocate(size_type cnt) {
         //return _Allocate(cnt, (pointer)0);
         //return calloc(cnt, sizeof(_T));
-        return (pointer)::HeapAlloc(::GetProcessHeap(), 0, cnt * sizeof(_T));
+        //return (pointer)::HeapAlloc(::GetProcessHeap(), 0, cnt * sizeof(_T));
+        return (pointer)malloc(cnt * sizeof(_T));
     }
 
     // allocate array of cnt elements, ignore hint
@@ -204,6 +206,8 @@ template <class _T, class _Other>
 inline bool operator!=(const TestAllocator<_T> &left, const TestAllocator<_Other> &right) throw() {
     return !(left == right);
 }
+
+//#include "cJSON.h"
 
 #include <algorithm>
 #include <functional>
@@ -292,6 +296,14 @@ int main(int argc, char *argv[])
     std::cout << json << std::endl;
     //func2(js1.as<std::map<std::string, JSON_Value> >());
 
+    //{
+    //    cJSON *t = cJSON_Parse("{\n\"name\": \"Jack (\\\"Bee\\\") Nimble\", \n\"format\": {\"type\":       \"rect\", \n\"width\":      1920, \n\"height\":     1080, \n\"interlace\":  false,\"frame rate\": 24\n}\n}");
+    //    char *out = cJSON_Print(t);
+    //    std::cout << out << std::endl;
+    //    free(out);
+    //    cJSON_Delete(t);
+    //}
+
     //return 0;
     //using jw::JSON_Value;
     typedef cppJSON JSON_Value;
@@ -337,7 +349,8 @@ int main(int argc, char *argv[])
 
     std::cout << "==========Iterators==========" << std::endl;
     {
-        cppJSON jv = cppJSON(std::vector<int>({ 1, 2, 3, 4, 5, 6, 7 }));
+        std::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
+        cppJSON jv = cppJSON(vec);
         std::cout << jv << std::endl;
 
         cppJSON jvt = jv;
@@ -354,6 +367,22 @@ int main(int argc, char *argv[])
         });
         std::cout << std::endl;
 
+        {
+            auto it = std::find_if(jv.rbegin(), jv.rend(), [](const cppJSON &j) { return j.as<int>() == 3; });
+            std::for_each(it.base(), jv.end(), [](const cppJSON &j) {
+                std::cout << j << "  ";
+            });
+            std::cout << std::endl;
+        }
+        {
+            auto it = std::find(vec.rbegin(), vec.rend(), 3);
+            std::for_each(it.base(), vec.end(), [](int i) { std::cout << i << "  "; });
+            std::cout << std::endl;
+
+            vec.erase(vec.begin(), vec.end());
+            //vec.insert()
+        }
+
         std::cout << "==========Const Iterator==========" << std::endl;
         std::copy(jv.cbegin(), jv.cend(), std::ostream_iterator<const cppJSON &>(std::cout, ", "));
         std::cout << std::endl;
@@ -363,7 +392,12 @@ int main(int argc, char *argv[])
             std::cout << j << "  ";
         });
         std::cout << std::endl;
+        std::vector<int>::const_iterator it;
+
     }
 
+    //new int;
+    //malloc(sizeof(int));
+    //TestAllocator<int>().allocate(10);
     return 0;
 }
