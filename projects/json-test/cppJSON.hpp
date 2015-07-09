@@ -119,16 +119,18 @@ namespace jw {
         typedef std::basic_string<char, _TRAITS, typename _ALLOC::template rebind<char>::other> StringType;
 
     private:
-        ValueType _type;
-        int64_t _valueInt64;
-        double _valueDouble;
-        StringType _valueString;
+        ValueType _type;  // The type of the item, as above.
+        int64_t _valueInt64;  // The item's number, if type==Integer
+        double _valueDouble;  // The item's number, if type==Float
+        StringType _valueString;  // The item's string, if type==String
 
-        StringType _key;
-        ThisType *_child;
-        ThisType *_next;
+        StringType _key;  // The item's name string, if this item is the child of, or is in the list of subitems of an object.
+        ThisType *_child;  // An array or object item will have a child pointer pointing to a chain of the items in the array/object.
+        ThisType *_next;  // next/prev allow you to walk array/object chains.
         ThisType *_prev;
-
+        // 原本cJSON的实现是用的双向非循环键表，
+        // 这里为了实现迭代器，增加一个头结点，用_child指向它，将头结点的_valueInt64用来表示链表结点数，
+        // 改成了循环键表
     private:
         inline void reset() {
             _type = ValueType::Null;
@@ -174,13 +176,13 @@ namespace jw {
 
         void clear() {
             if (_child != nullptr) {
+                for (ThisType *p = _child->_next; p != _child; ) {
+                    ThisType *q = p->_next;
+                    Delete(p);
+                    p = q;
+                }
                 Delete(_child);
                 _child = nullptr;
-            }
-
-            if (_next != nullptr) {
-                Delete(_next);
-                _next = nullptr;
             }
             reset();
         }
@@ -352,82 +354,7 @@ namespace jw {
             }
         };
 
-        class reverse_iterator {
-            friend class BasicJSON<_TRAITS, _ALLOC>;
-            ThisType *_ptr;
-
-            reverse_iterator(ThisType *ptr) throw() : _ptr(ptr) {
-            }
-
-        public:
-            typedef std::bidirectional_iterator_tag iterator_category;
-            typedef ThisType value_type;
-            typedef ptrdiff_t difference_type;
-            typedef difference_type distance_type;
-            typedef value_type *pointer;
-            typedef value_type &reference;
-
-            reverse_iterator() throw() : _ptr(nullptr) {
-            }
-
-            reverse_iterator(const reverse_iterator &other) throw() : _ptr(other._ptr) {
-            }
-
-            reverse_iterator &operator=(const reverse_iterator &other) throw() {
-                _ptr = other._ptr;
-                return *this;
-            }
-
-            iterator base() {
-                return iterator(_ptr);
-            }
-
-            inline ThisType &operator*() throw() {
-                return *_ptr;
-            }
-
-            inline const ThisType &operator*() const throw() {
-                return *_ptr;
-            }
-
-            inline ThisType *operator->() throw() {
-                return _ptr;
-            }
-
-            inline const ThisType *operator->() const throw() {
-                return _ptr;
-            }
-
-            inline reverse_iterator &operator++() throw() {
-                _ptr = _ptr->_prev;
-                return *this;
-            }
-
-            inline reverse_iterator operator++(int) throw() {
-                reverse_iterator ret(this);
-                _ptr = _ptr->_prev;
-                return ret;
-            }
-
-            inline reverse_iterator &operator--() throw() {
-                _ptr = _ptr->_next;
-                return *this;
-            }
-
-            inline reverse_iterator operator--(int) throw() {
-                reverse_iterator ret(this);
-                _ptr = _ptr->_next;
-                return ret;
-            }
-
-            inline bool operator==(const reverse_iterator &other) const throw() {
-                return _ptr == other._ptr;
-            }
-
-            inline bool operator!=(const reverse_iterator &other) const throw() {
-                return _ptr != other._ptr;
-            }
-        };
+        typedef std::reverse_iterator<iterator> reverse_iterator;
 
         class const_iterator {
             friend class const_reverse_iterator;
@@ -495,139 +422,54 @@ namespace jw {
             }
         };
 
-        class const_reverse_iterator {
-            friend class BasicJSON<_TRAITS, _ALLOC>;
-            const ThisType *_ptr;
-
-            const_reverse_iterator(ThisType *ptr) throw() : _ptr(ptr) {
-            }
-
-        public:
-            typedef std::bidirectional_iterator_tag iterator_category;
-            typedef ThisType value_type;
-            typedef ptrdiff_t difference_type;
-            typedef difference_type distance_type;
-            typedef value_type *pointer;
-            typedef value_type &reference;
-
-            const_reverse_iterator() throw() : _ptr(nullptr) {
-            }
-
-            const_reverse_iterator(const const_reverse_iterator &other) throw() : _ptr(other._ptr) {
-            }
-
-            const_reverse_iterator &operator=(const const_reverse_iterator &other) throw() {
-                _ptr = other._ptr;
-                return *this;
-            }
-
-            const_iterator base() {
-                return const_iterator(_ptr);
-            }
-
-            inline const ThisType &operator*() const throw() {
-                return *_ptr;
-            }
-
-            inline const ThisType *operator->() const throw() {
-                return _ptr;
-            }
-
-            inline const_reverse_iterator &operator++() throw() {
-                _ptr = _ptr->_next;
-                return *this;
-            }
-
-            inline const_reverse_iterator operator++(int) throw() {
-                const_reverse_iterator ret(this);
-                _ptr = _ptr->_next;
-                return ret;
-            }
-
-            inline const_reverse_iterator &operator--() throw() {
-                _ptr = _ptr->_prev;
-                return *this;
-            }
-
-            inline const_reverse_iterator operator--(int) throw() {
-                const_reverse_iterator ret(this);
-                _ptr = _ptr->_prev;
-                return ret;
-            }
-
-            inline bool operator==(const const_reverse_iterator &other) const throw() {
-                return _ptr == other._ptr;
-            }
-
-            inline bool operator!=(const const_reverse_iterator &other) const throw() {
-                return _ptr != other._ptr;
-            }
-        };
+        typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
         iterator begin() {
-            return iterator(_child);
+            return iterator(_child->_next);
         }
 
         const_iterator begin() const {
-            return const_iterator(_child);
+            return const_iterator(_child->_next);
         }
 
         const_iterator cbegin() const {
-            return const_iterator(_child);
+            return const_iterator(_child->_next);
         }
 
         iterator end() {
-            return iterator(nullptr);
+            return iterator(_child);
         }
 
         const_iterator end() const {
-            return const_iterator(nullptr);
+            return const_iterator(_child);
         }
 
         const_iterator cend() const {
-            return const_iterator(nullptr);
+            return const_iterator(_child);
         }
 
         reverse_iterator rbegin() {
-            if (_child == nullptr) return reverse_iterator(nullptr);
-            ThisType *next = _child->_next, *prev = nullptr;
-            while (next != nullptr) {
-                prev = next;
-                next = next->_next;
-            }
-            return reverse_iterator(prev);
+            return reverse_iterator(_child);
         }
 
         const_reverse_iterator rbegin() const {
-            if (_child == nullptr) return const_reverse_iterator(nullptr);
-            ThisType *next = _child->_next, *prev = nullptr;
-            while (next != nullptr) {
-                prev = next;
-                next = next->_next;
-            }
-            return const_reverse_iterator(prev);
+            return const_reverse_iterator(_child);
         }
 
         const_reverse_iterator crbegin() const {
-            if (_child == nullptr) return const_reverse_iterator(nullptr);
-            ThisType *next = _child->_next, *prev = nullptr;
-            while (next != nullptr) {
-                prev = next;
-                next = next->_next;
-            }
-            return const_reverse_iterator(prev);
+            return const_reverse_iterator(_child);
         }
 
         reverse_iterator rend() {
-            return reverse_iterator(nullptr);
+            return reverse_iterator(_child->_next);
         }
 
         const_reverse_iterator rend() const {
-            return const_reverse_iterator(nullptr);
+            return const_reverse_iterator(_child->_next);
         }
 
         const_reverse_iterator crend() const {
-            return const_reverse_iterator(nullptr);
+            return const_reverse_iterator(_child->_next);
         }
 
         template <class, class, class> friend struct __cpp_basic_json_impl::AssignImpl;
@@ -793,10 +635,14 @@ namespace jw {
             value = skip(value + 1);
             if (*value == ']') return value + 1;    // empty array.
 
-            this->_child = child = New();
+            this->_child = New();
+            if (this->_child == nullptr) return nullptr;        // memory fail
+            this->_child->_next = child = New();
             if (child == nullptr) return nullptr;        // memory fail
             value = skip(child->parse_value(skip(value)));  // skip any spacing, get the value.
             if (value == nullptr) return nullptr;
+            child->_next = this->_child;
+            child->_prev = this->_child;
 
             while (*value == ',') {
                 ThisType *new_item = New();
@@ -804,6 +650,9 @@ namespace jw {
                 child->_next = new_item; new_item->_prev = child; child = new_item;
                 value = skip(child->parse_value(skip(value + 1)));
                 if (value == nullptr) return nullptr; // memory fail
+                new_item->_next = this->_child;
+                this->_child->_prev = new_item;
+                ++this->_child->_valueInt64;
             }
 
             if (*value == ']') return value + 1;    // end of array
@@ -818,14 +667,18 @@ namespace jw {
             if (*value == '}') return value + 1;    // empty array.
 
             ThisType *child;
-            _child = child = New();
-            if (_child == nullptr) return nullptr;
+            this->_child = New();
+            if (this->_child == nullptr) return nullptr;        // memory fail
+            this->_child->_next = child = New();
+            if (child == nullptr) return nullptr;        // memory fail
             value = skip(child->parse_string(skip(value)));
             if (value == nullptr) return nullptr;
             child->_key = std::move(child->_valueString); child->_valueString.clear();
             if (*value != ':') { ep = value; return nullptr; }  // fail!
             value = skip(child->parse_value(skip(value + 1)));  // skip any spacing, get the value.
             if (value == nullptr) return nullptr;
+            child->_next = this->_child;
+            child->_prev = this->_child;
 
             while (*value == ',') {
                 ThisType *new_item = New();
@@ -837,6 +690,9 @@ namespace jw {
                 if (*value != ':') { ep = value; return nullptr; }  // fail!
                 value = skip(child->parse_value(skip(value + 1)));  // skip any spacing, get the value.
                 if (value == nullptr) return nullptr;
+                new_item->_next = this->_child;
+                this->_child->_prev = new_item;
+                ++this->_child->_valueInt64;
             }
 
             if (*value == '}') return value + 1;    // end of array
@@ -911,20 +767,19 @@ namespace jw {
 
         template <class _STRING>
         void print_array(_STRING &ret, int depth, bool fmt) const {
-            ThisType *child = _child;
-            int numentries = 0, i = 0;
+            size_t numentries = static_cast<size_t>(_child->_valueInt64);
 
-            // How many entries in the array?
-            while (child != nullptr) ++numentries, child = child->_next;
-            // Explicitly handle numentries==0
-            if (numentries == 0) {
+            // Explicitly handle empty object case
+            if (_child->_valueInt64 == 0) {
                 ret.append("[]");
                 return;
             }
 
             // Retrieve all the results:
+            ThisType *child = _child;
+            size_t i = 0;
             ret.append("[");
-            for (child = _child; child != nullptr; child = child->_next, ++i) {
+            for (child = _child->_next; child != _child; child = child->_next, ++i) {
                 child->print_value(ret, depth + 1, fmt);
                 if (i != numentries - 1) { ret.append(1, ','); if (fmt) ret.append(1, ' '); }
             }
@@ -933,10 +788,8 @@ namespace jw {
 
         template <class _STRING>
         void print_object(_STRING &ret, int depth, bool fmt) const {
-            int numentries = 0;
-            ThisType *child = _child;
-            // Count the number of entries.
-            while (child != nullptr) ++numentries, child = child->_next;
+            size_t numentries = static_cast<size_t>(_child->_valueInt64);
+
             // Explicitly handle empty object case
             if (numentries == 0) {
                 ret.append(1, '{');
@@ -946,9 +799,10 @@ namespace jw {
             }
 
             // Compose the output:
+            ThisType *child = _child;
             child = _child; ++depth;
             ret.append(1, '{'); if (fmt) ret.append(1, '\n');
-            for (int i = 0; i < numentries; ++i) {
+            for (size_t i = 0; i < numentries; ++i) {
                 if (fmt) ret.append(depth, '\t');
                 print_string_ptr(ret, child->_key);
                 ret.append(1, ':'); if (fmt) ret.append(1, '\t');
@@ -973,14 +827,19 @@ namespace jw {
             // If non-recursive, then we're done!
             if (!recurse) return true;
             // Walk the ->next chain for the child.
-            cptr = item._child;
-            while (cptr != nullptr) {
-                newchild = New();
-                if (newchild == nullptr) return false;
-                if (!Duplicate(*newchild, *cptr, true)) { Delete(newchild); return false; }     // Duplicate (with recurse) each item in the ->next chain
-                if (nptr != nullptr)    { nptr->_next = newchild, newchild->_prev = nptr; nptr = newchild; }    // If newitem->child already set, then crosswire ->prev and ->next and move on
-                else        { newitem._child = newchild; nptr = newchild; }                 // Set newitem->child and move to it
-                cptr = cptr->_next;
+            if (item._child != nullptr) {
+                newitem._child = New();
+                nptr = newitem._child;
+                cptr = item._child->_next;
+                while (cptr != item._child) {
+                    newchild = New();
+                    if (newchild == nullptr) return false;
+                    if (!Duplicate(*newchild, *cptr, true)) { Delete(newchild); return false; }     // Duplicate (with recurse) each item in the ->next chain
+                    nptr->_next = newchild, newchild->_prev = nptr; nptr = newchild;    // crosswire ->prev and ->next and move on
+                    cptr = cptr->_next;
+                }
+                newitem._child->_prev = nptr;
+                nptr->_next = newitem._child;
             }
             return true;
         }
@@ -1203,32 +1062,34 @@ namespace jw {
             typedef _ARRAY SourceType[_N];
             static void invoke(JsonType &c, const SourceType &arg) {
                 c._type = JsonType::ValueType::Array;
-                JsonType *prev = nullptr;
+                c._child = JsonType::New();
+                JsonType *prev = c._child;
+                prev->_next = prev->_prev = prev;
                 for (size_t i = 0; i < _N; ++i) {
                     JsonType *item = JsonType::New();
                     AssignImpl<_TRAITS, _ALLOC, _ARRAY>::invoke(*item, arg[i]);
-                    if (i != 0) {
-                        prev->_next = item;
-                        item->_prev = prev;
-                    } else {
-                        c._child = item;
-                    }
+                    prev->_next = item;
+                    item->_prev = prev;
+                    item->_next = c._child;
+                    c._child->_prev = item;
+                    ++c._child->_valueInt64;
                     prev = item;
                 }
             }
 
             static void invoke(JsonType &c, SourceType &&arg) {
                 c._type = JsonType::ValueType::Array;
-                JsonType *prev = nullptr;
+                c._child = JsonType::New();
+                JsonType *prev = c._child;
+                prev->_next = prev->_prev = prev;
                 for (size_t i = 0; i < _N; ++i) {
                     JsonType *item = JsonType::New();
                     AssignImpl<_TRAITS, _ALLOC, _ARRAY>::invoke(*item, std::move(arg[i]));
-                    if (i != 0) {
-                        prev->_next = item;
-                        item->_prev = prev;
-                    } else {
-                        c._child = item;
-                    }
+                    prev->_next = item;
+                    item->_prev = prev;
+                    item->_next = c._child;
+                    c._child->_prev = item;
+                    ++c._child->_valueInt64;
                     prev = item;
                 }
             }
@@ -1240,32 +1101,34 @@ namespace jw {
             typedef _ARRAY SourceType;
             static void invoke(JsonType &c, const SourceType &arg) {
                 c._type = JsonType::ValueType::Array;
-                JsonType *prev = nullptr;
+                c._child = JsonType::New();
+                JsonType *prev = c._child;
+                prev->_next = prev->_prev = prev;
                 for (typename SourceType::const_iterator it = arg.begin(); it != arg.end(); ++it) {
                     JsonType *item = JsonType::New();
                     AssignImpl<_TRAITS, _ALLOC, typename _ARRAY::value_type>::invoke(*item, *it);
-                    if (it != arg.begin()) {
-                        prev->_next = item;
-                        item->_prev = prev;
-                    } else {
-                        c._child = item;
-                    }
+                    prev->_next = item;
+                    item->_prev = prev;
+                    item->_next = c._child;
+                    c._child->_prev = item;
+                    ++c._child->_valueInt64;
                     prev = item;
                 }
             }
 
             static void invoke(JsonType &c, SourceType &&arg) {
                 c._type = JsonType::ValueType::Array;
-                JsonType *prev = nullptr;
+                c._child = JsonType::New();
+                JsonType *prev = c._child;
+                prev->_next = prev->_prev = prev;
                 for (typename SourceType::iterator it = arg.begin(); it != arg.end(); ++it) {
                     JsonType *item = JsonType::New();
                     AssignImpl<_TRAITS, _ALLOC, typename _ARRAY::value_type>::invoke(*item, std::move(*it));
-                    if (it != arg.begin()) {
-                        prev->_next = item;
-                        item->_prev = prev;
-                    } else {
-                        c._child = item;
-                    }
+                    prev->_next = item;
+                    item->_prev = prev;
+                    item->_next = c._child;
+                    c._child->_prev = item;
+                    ++c._child->_valueInt64;
                     prev = item;
                 }
             }
@@ -1308,17 +1171,18 @@ namespace jw {
             static void invoke(JsonType &c, const SourceType &arg) {
                 static_assert(std::is_convertible<const char *, typename _MAP::key_type>::value, "key_type must be able to convert to const char *");
                 c._type = JsonType::ValueType::Object;
-                JsonType *prev = nullptr;
+                c._child = JsonType::New();
+                JsonType *prev = c._child;
+                prev->_next = prev->_prev = prev;
                 for (typename SourceType::const_iterator it = arg.begin(); it != arg.end(); ++it) {
                     JsonType *item = JsonType::New();
                     item->_key = _ConvertString(it->first);
                     AssignImpl<_TRAITS, _ALLOC, typename _MAP::mapped_type>::invoke(*item, it->second);
-                    if (it != arg.begin()) {
-                        prev->_next = item;
-                        item->_prev = prev;
-                    } else {
-                        c._child = item;
-                    }
+                    prev->_next = item;
+                    item->_prev = prev;
+                    item->_next = c._child;
+                    c._child->_prev = item;
+                    ++c._child->_valueInt64;
                     prev = item;
                 }
             }
@@ -1326,17 +1190,18 @@ namespace jw {
             static void invoke(JsonType &c, SourceType &&arg) {
                 static_assert(std::is_convertible<const char *, typename _MAP::key_type>::value, "key_type must be able to convert to const char *");
                 c._type = JsonType::ValueType::Object;
-                JsonType *prev = nullptr;
+                c._child = JsonType::New();
+                JsonType *prev = c._child;
+                prev->_next = prev->_prev = prev;
                 for (typename SourceType::iterator it = arg.begin(); it != arg.end(); ++it) {
                     JsonType *item = JsonType::New();
                     item->_key = _ConvertString(it->first);
                     AssignImpl<_TRAITS, _ALLOC, typename _MAP::mapped_type>::invoke(*item, std::move(it->second));
-                    if (it != arg.begin()) {
-                        prev->_next = item;
-                        item->_prev = prev;
-                    } else {
-                        c._child = item;
-                    }
+                    prev->_next = item;
+                    item->_prev = prev;
+                    item->_next = c._child;
+                    c._child->_prev = item;
+                    ++c._child->_valueInt64;
                     prev = item;
                 }
             }
