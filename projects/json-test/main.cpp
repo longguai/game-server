@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     //_CrtSetBreakAlloc(147);
 #endif
-    typedef jw::BasicJSON<TestCharTraits, TestAllocator<char> > cppJSON;
+    typedef jw::BasicJSON<int, float, TestCharTraits, TestAllocator<char> > cppJSON;
 
 	std::cout << "==========Construct From BasicTypes==========" << std::endl;
 	std::cout << cppJSON() << std::endl;
