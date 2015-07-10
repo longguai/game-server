@@ -1155,7 +1155,7 @@ namespace jw {
 
         template <class _JsonType, class _TargetType>
         _TargetType AsImpl<_JsonType, _TargetType>::invoke(const _JsonType &c) {
-            std::basic_stringstream<char, typename _JsonType::StringType::value_type, typename _JsonType::StringType::allocator_type> ss;
+            std::basic_stringstream<char, typename _JsonType::StringType::traits_type, typename _JsonType::StringType::allocator_type> ss;
             switch (c._valueType) {
             case _JsonType::ValueType::Null: break;
             case _JsonType::ValueType::False: ss << 0; break;
