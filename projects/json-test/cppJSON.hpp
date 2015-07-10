@@ -931,6 +931,16 @@ namespace jw {
             //static_assert(0, "unimplemented type");
         }
 
+        template <class _JsonType> struct AssignImpl<_JsonType, _JsonType> {
+            typedef _JsonType SourceType;
+            static inline void invoke(_JsonType &c, const _JsonType &arg) {
+                c = arg;
+            }
+            static inline void invoke(_JsonType &c, _JsonType &&arg) {
+                c = std::move(arg);
+            }
+        };
+
         template <class _JsonType> struct AssignImpl<_JsonType, std::nullptr_t> {
             typedef std::nullptr_t SourceType;
             static inline void invoke(_JsonType &c, SourceType) {
@@ -1173,13 +1183,21 @@ namespace jw {
             return ret;
         }
 
-        //template <class _JsonType>
-        //struct AsImpl<_JsonType, const _JsonType *> {
-        //    typedef const _JsonType *TargetType;
-        //    static TargetType invoke(const _JsonType &c) {
-        //        return &c;
-        //    }
-        //};
+        template <class _JsonType>
+        struct AsImpl<_JsonType, const _JsonType *> {
+            typedef const _JsonType *TargetType;
+            inline static TargetType invoke(const _JsonType &c) {
+                return &c;
+            }
+        };
+
+        template <class _JsonType>
+        struct AsImpl<_JsonType, const _JsonType &> {
+            typedef const _JsonType &TargetType;
+            inline static TargetType invoke(const _JsonType &c) {
+                return c;
+            }
+        };
 
         template <class _JsonType, class _Integer>
         struct AsIntegerImpl {

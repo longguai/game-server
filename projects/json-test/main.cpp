@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
 	// TODO:
 	//std::wcout << js5.as<std::wstring>();// << std::endl;
 
-	std::cout << "==========Construct From Array End==========" << std::endl;
+	//std::cout << "==========Construct From Array End==========" << std::endl;
 
     std::cout << "==========Parse Array==========" << std::endl;
     cppJSON json;
@@ -294,7 +294,8 @@ int main(int argc, char *argv[])
     std::cout << "==========Parse==========" << std::endl;
     json.Parse("{\n\"name\": \"Jack (\\\"Bee\\\") Nimble\", \n\"format\": {\"type\":       \"rect\", \n\"width\":      1920, \n\"height\":     1080, \n\"interlace\":  false,\"frame rate\": 24\n}\n}");
     std::cout << json << std::endl;
-    //func2(js1.as<std::map<std::string, JSON_Value> >());
+    func2(json.as<std::map<std::string, const cppJSON &> >());
+    func2(json.as<std::map<std::string, const cppJSON *> >());
 
     //{
     //    cJSON *t = cJSON_Parse("{\n\"name\": \"Jack (\\\"Bee\\\") Nimble\", \n\"format\": {\"type\":       \"rect\", \n\"width\":      1920, \n\"height\":     1080, \n\"interlace\":  false,\"frame rate\": 24\n}\n}");
@@ -306,7 +307,7 @@ int main(int argc, char *argv[])
 
     //return 0;
     //using jw::JSON_Value;
-    typedef cppJSON JSON_Value;
+    //typedef cppJSON JSON_Value;
 
     //std::cout << "==========TEST OBJECT MERGE==========" << std::endl;
     //JSON_Value temp;
@@ -331,7 +332,7 @@ int main(int argc, char *argv[])
     //std::cout << js10 << std::endl;
 
     //std::cout << "==========TEST OBJECT CONSTRUCT==========" << std::endl;
-    JSON_Value js11;
+    cppJSON js11;
     //js11.insert("123", JSON_Value("123"));
     //js11.insert("456", JSON_Value({1, 2, 3, 4, 5, 6, 7}));
     //js11.insert("789", JSON_Value(0.5F));
@@ -369,7 +370,7 @@ int main(int argc, char *argv[])
 
         {
             auto it = std::find_if(jv.rbegin(), jv.rend(), [](const cppJSON &j) { return j.as<int>() == 3; });
-            std::cout << *jv.insert(it.base(), 100) << std::endl;
+            std::cout << *jv.insert(it.base(), cppJSON(100)) << std::endl;
             std::cout << *jv.erase(jv.begin()) << std::endl;
             std::for_each(jv.begin(), jv.end(), [](const cppJSON &j) {
                 std::cout << j << "  ";
