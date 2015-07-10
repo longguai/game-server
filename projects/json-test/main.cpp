@@ -408,7 +408,7 @@ int main(int argc, char *argv[])
     {
         cppJSON js(cppJSON::ValueType::Array);
         int arr[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        std::transform(std::rbegin(arr), std::rend(arr), std::inserter(js, js.begin()), [](int a) {
+        std::transform(std::begin(arr), std::end(arr), std::inserter(js, js.begin()), [](int a) {
             return cppJSON(a);
         });
         std::cout << js << std::endl;
