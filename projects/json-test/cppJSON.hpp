@@ -186,7 +186,7 @@ namespace jw {
         template <class _T>
         explicit BasicJSON<_Integer, _Float, _Traits, _Alloc>(const std::initializer_list<_T> &il) {
             reset();
-            __cpp_basic_json_impl::AssignImpl<_Traits, _Alloc, std::initializer_list<_T> >::invoke(*this, il);
+            __cpp_basic_json_impl::AssignImpl<BasicJSON<_Integer, _Float, _Traits, _Alloc>, std::initializer_list<_T> >::invoke(*this, il);
         }
 
         template <class _T>
@@ -442,7 +442,7 @@ namespace jw {
 
         iterator erase(const_iterator first, const_iterator last) {
             assert(_valueType == ValueType::Array);
-            SelfType *ptr = position._ptr;
+            SelfType *ptr = first._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
@@ -940,7 +940,7 @@ namespace jw {
             typedef _Integer SourceType;
             static inline void invoke(_JsonType &c, SourceType arg) {
                 c._valueType = _JsonType::ValueType::Integer;
-                c._valueInt = static_cast<_JsonType::IntegerType>(arg);
+                c._valueInt = static_cast<typename _JsonType::IntegerType>(arg);
             }
         };
 
@@ -971,7 +971,7 @@ namespace jw {
             typedef _Float SourceType;
             static inline void invoke(_JsonType &c, SourceType arg) {
                 c._valueType = _JsonType::ValueType::Float;
-                c._valueFloat = static_cast<_JsonType::FloatType>(arg);
+                c._valueFloat = static_cast<typename _JsonType::FloatType>(arg);
             }
         };
 
@@ -1297,7 +1297,7 @@ namespace jw {
                 case _JsonType::ValueType::True: return TargetType("true");
                 case _JsonType::ValueType::Integer: {
                     char str[21];  // 2^64+1 can be represented in 21 chars.
-                    sprintf(str, "%" PRId64, c._valueInt);
+                    sprintf(str, "%" PRId64, (int64_t)c._valueInt);
                     return TargetType(str);
                 }
                 case _JsonType::ValueType::Float: {
