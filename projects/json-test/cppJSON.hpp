@@ -51,40 +51,39 @@
 
 #include <iterator>
 #include <algorithm>
+#include <assert.h>
 
 namespace jw {
 
-    template <class _TRAITS, class _ALLOC>
+    template <class _Traits, class _Alloc>
     class BasicJSON;
 
     namespace __cpp_basic_json_impl {
 
-        template <class _TRAITS, class _ALLOC, class _T> struct AssignImpl {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _T SourceType;
-            static void invoke(JsonType &c, SourceType arg);
+        template <class _JsonType, class _SourceType> struct AssignImpl {
+            typedef _SourceType SourceType;
+            static void invoke(_JsonType &c, SourceType arg);
         };
 
-        template <class _TRAITS, class _ALLOC, class _INTEGER> struct AssignFromIntegerImpl;
-        template <class _TRAITS, class _ALLOC, class _FLOAT> struct AssignFromFloatImpl;
-		template <class _TRAITS, class _ALLOC, class _STRING> struct AssignFromStringImpl;
-		template <class _TRAITS, class _ALLOC, class _ARRAY> struct AssignFromArrayImpl;
-        template <class _TRAITS, class _ALLOC, class _MAP> struct AssignFromMapImpl;
+        template <class _JsonType, class _Integer> struct AssignFromIntegerImpl;
+        template <class _JsonType, class _Float> struct AssignFromFloatImpl;
+        template <class _JsonType, class _String> struct AssignFromStringImpl;
+        template <class _JsonType, class _Array> struct AssignFromArrayImpl;
+        template <class _JsonType, class _Map> struct AssignFromMapImpl;
 
-        template <class _TRAITS, class _ALLOC, class _T> struct AsImpl {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _T TargetType;
-            static TargetType invoke(const JsonType &c);
+        template <class _JsonType, class _TargetType> struct AsImpl {
+            typedef _TargetType TargetType;
+            static TargetType invoke(const _JsonType &c);
         };
 
-        template <class _TRAITS, class _ALLOC, class _INTEGER> struct AsIntegerImpl;
-        template <class _TRAITS, class _ALLOC, class _FLOAT> struct AsFloatImpl;
-        template <class _TRAITS, class _ALLOC, class _STRING> struct AsStringImpl;
-        template <class _TRAITS, class _ALLOC, class _ARRAY> struct AsArrayImpl;
-        template <class _TRAITS, class _ALLOC, class _MAP> struct AsMapImpl;
+        template <class _JsonType, class _Integer> struct AsIntegerImpl;
+        template <class _JsonType, class _Float> struct AsFloatImpl;
+        template <class _JsonType, class _String> struct AsStringImpl;
+        template <class _JsonType, class _Array> struct AsArrayImpl;
+        template <class _JsonType, class _Map> struct AsMapImpl;
     }
 
-    template <class _TRAITS, class _ALLOC>
+    template <class _Traits, class _Alloc>
     class BasicJSON {
     public:
         friend class iterator;
@@ -93,10 +92,8 @@ namespace jw {
             Null, False, True, Integer, Float, String, Array, Object
         };
 
-        typedef BasicJSON<_TRAITS, _ALLOC> ThisType;
-
         // 开始作死 →_→
-        typedef std::basic_string<char, _TRAITS, typename _ALLOC::template rebind<char>::other> StringType;
+        typedef std::basic_string<char, _Traits, typename _Alloc::template rebind<char>::other> StringType;
 
     private:
         ValueType _type;  // The type of the item, as above.
@@ -105,12 +102,14 @@ namespace jw {
         StringType _valueString;  // The item's string, if type==String
 
         StringType _key;  // The item's name string, if this item is the child of, or is in the list of subitems of an object.
-        ThisType *_child;  // An array or object item will have a child pointer pointing to a chain of the items in the array/object.
-        ThisType *_next;  // next/prev allow you to walk array/object chains.
-        ThisType *_prev;
+        BasicJSON<_Traits, _Alloc> *_child;  // An array or object item will have a child pointer pointing to a chain of the items in the array/object.
+        BasicJSON<_Traits, _Alloc> *_next;  // next/prev allow you to walk array/object chains.
+        BasicJSON<_Traits, _Alloc> *_prev;
+
         // 原本cJSON的实现是用的双向非循环键表，
         // 这里为了实现迭代器，增加一个头结点，用_child指向它，将头结点的_valueInt64用来表示链表结点数，
         // 改成了循环键表
+
     private:
         inline void reset() {
             _type = ValueType::Null;
@@ -126,11 +125,11 @@ namespace jw {
 
     public:
         // 默认构造
-        BasicJSON<_TRAITS, _ALLOC>() {
+        BasicJSON<_Traits, _Alloc>() {
             reset();
         }
 
-        ~BasicJSON<_TRAITS, _ALLOC>() {
+        ~BasicJSON<_Traits, _Alloc>() {
             clear();
         }
 
@@ -156,8 +155,8 @@ namespace jw {
 
         void clear() {
             if (_child != nullptr) {
-                for (ThisType *p = _child->_next; p != _child; ) {
-                    ThisType *q = p->_next;
+                for (BasicJSON<_Traits, _Alloc> *p = _child->_next; p != _child; ) {
+                    BasicJSON<_Traits, _Alloc> *q = p->_next;
                     Delete(p);
                     p = q;
                 }
@@ -175,32 +174,32 @@ namespace jw {
 
         // 带参构造
         template <class _T>
-        explicit BasicJSON<_TRAITS, _ALLOC>(_T &&t) {
+        explicit BasicJSON<_Traits, _Alloc>(_T &&val) {
             reset();
-            __cpp_basic_json_impl::AssignImpl<_TRAITS, _ALLOC,
-                typename std::remove_cv<typename std::remove_reference<_T>::type>::type>::invoke(*this, std::forward<_T>(t));
+            __cpp_basic_json_impl::AssignImpl<BasicJSON<_Traits, _Alloc>,
+                typename std::remove_cv<typename std::remove_reference<_T>::type>::type>::invoke(*this, std::forward<_T>(val));
         }
 
         template <class _T>
-        explicit BasicJSON<_TRAITS, _ALLOC>(const std::initializer_list<_T> &il) {
+        explicit BasicJSON<_Traits, _Alloc>(const std::initializer_list<_T> &il) {
             reset();
-            __cpp_basic_json_impl::AssignImpl<_TRAITS, _ALLOC, std::initializer_list<_T> >::invoke(*this, il);
+            __cpp_basic_json_impl::AssignImpl<_Traits, _Alloc, std::initializer_list<_T> >::invoke(*this, il);
         }
 
         template <class _T>
-        explicit BasicJSON<_TRAITS, _ALLOC>(std::initializer_list<_T> &&il) {
+        explicit BasicJSON<_Traits, _Alloc>(std::initializer_list<_T> &&il) {
             reset();
-            __cpp_basic_json_impl::AssignImpl<_TRAITS, _ALLOC, std::initializer_list<_T> >::invoke(*this, il);
+            __cpp_basic_json_impl::AssignImpl<BasicJSON<_Traits, _Alloc>, std::initializer_list<_T> >::invoke(*this, il);
         }
 
         // 复制构造
-        BasicJSON<_TRAITS, _ALLOC>(const BasicJSON<_TRAITS, _ALLOC> &other) {
+        BasicJSON<_Traits, _Alloc>(const BasicJSON<_Traits, _Alloc> &other) {
             reset();
             Duplicate(*this, other, true);
         }
 
         // 移动构造
-        BasicJSON<_TRAITS, _ALLOC>(BasicJSON<_TRAITS, _ALLOC> &&other) {
+        BasicJSON<_Traits, _Alloc>(BasicJSON<_Traits, _Alloc> &&other) {
             _type = other._type;
             _valueInt64 = other._valueInt64;
             _valueDouble = other._valueDouble;
@@ -215,14 +214,14 @@ namespace jw {
         }
 
         // 赋值
-        BasicJSON<_TRAITS, _ALLOC> &operator=(const BasicJSON<_TRAITS, _ALLOC> &other) {
+        BasicJSON<_Traits, _Alloc> &operator=(const BasicJSON<_Traits, _Alloc> &other) {
             clear();
             Duplicate(*this, other, true);
             return *this;
         }
 
         // 移动赋值
-        BasicJSON<_TRAITS, _ALLOC> &operator=(BasicJSON<_TRAITS, _ALLOC> &&other) {
+        BasicJSON<_Traits, _Alloc> &operator=(BasicJSON<_Traits, _Alloc> &&other) {
             clear();
 
             _type = other._type;
@@ -240,7 +239,7 @@ namespace jw {
         }
 
         // 用nullptr赋值
-        BasicJSON<_TRAITS, _ALLOC> &operator=(std::nullptr_t) {
+        BasicJSON<_Traits, _Alloc> &operator=(std::nullptr_t) {
             clear();
             return *this;
         }
@@ -254,22 +253,28 @@ namespace jw {
             return (_type != ValueType::Null);
         }
 
-		// as
+        // as
         template <class _T> _T as() const {
-            return __cpp_basic_json_impl::AsImpl<_TRAITS, _ALLOC, _T>::invoke(*this);
+            return __cpp_basic_json_impl::AsImpl<BasicJSON<_Traits, _Alloc>, _T>::invoke(*this);
+        }
+
+        bool empty() const {
+            assert(_type == ValueType::Array || _type == ValueType::Object);
+            return (_child->_next == _child);
         }
 
     public:
+        // 迭代器相关
         class iterator {
-            friend class BasicJSON<_TRAITS, _ALLOC>;
-            friend class reverse_iterator;
-            ThisType *_ptr;
+            friend class BasicJSON<_Traits, _Alloc>;
+            friend class const_iterator;
+            BasicJSON<_Traits, _Alloc> *_ptr;
 
-            iterator(ThisType *ptr) throw() : _ptr(ptr) { }
+            iterator(BasicJSON<_Traits, _Alloc> *ptr) throw() : _ptr(ptr) { }
 
         public:
             typedef std::bidirectional_iterator_tag iterator_category;
-            typedef ThisType value_type;
+            typedef BasicJSON<_Traits, _Alloc> value_type;
             typedef ptrdiff_t difference_type;
             typedef difference_type distance_type;
             typedef value_type *pointer;
@@ -315,16 +320,15 @@ namespace jw {
         typedef std::reverse_iterator<iterator> reverse_iterator;
 
         class const_iterator {
-            friend class const_reverse_iterator;
-            friend class BasicJSON<_TRAITS, _ALLOC>;
-            const ThisType *_ptr;
+            friend class BasicJSON<_Traits, _Alloc>;
+            BasicJSON<_Traits, _Alloc> *_ptr;
 
-            const_iterator(ThisType *ptr) throw() : _ptr(ptr) {
+            const_iterator(BasicJSON<_Traits, _Alloc> *ptr) throw() : _ptr(ptr) {
             }
 
         public:
             typedef std::bidirectional_iterator_tag iterator_category;
-            typedef const ThisType value_type;
+            typedef const BasicJSON<_Traits, _Alloc> value_type;
             typedef ptrdiff_t difference_type;
             typedef difference_type distance_type;
             typedef value_type *pointer;
@@ -332,6 +336,7 @@ namespace jw {
 
             const_iterator() throw() : _ptr(nullptr) { }
             const_iterator(const const_iterator &other) throw() : _ptr(other._ptr) { }
+            const_iterator(const iterator &other) throw() : _ptr(other._ptr) { }
 
             const_iterator &operator=(const const_iterator &other) throw() {
                 _ptr = other._ptr;
@@ -415,37 +420,37 @@ namespace jw {
             return const_reverse_iterator(_child->_next);
         }
 
-        template <class, class, class> friend struct __cpp_basic_json_impl::AssignImpl;
-        template <class, class, class> friend struct __cpp_basic_json_impl::AssignFromIntegerImpl;
-        template <class, class, class> friend struct __cpp_basic_json_impl::AssignFromFloatImpl;
-        template <class, class, class> friend struct __cpp_basic_json_impl::AssignFromStringImpl;
-        template <class, class, class> friend struct __cpp_basic_json_impl::AssignFromArrayImpl;
-        template <class, class, class> friend struct __cpp_basic_json_impl::AssignFromMapImpl;
+        template <class, class> friend struct __cpp_basic_json_impl::AssignImpl;
+        template <class, class> friend struct __cpp_basic_json_impl::AssignFromIntegerImpl;
+        template <class, class> friend struct __cpp_basic_json_impl::AssignFromFloatImpl;
+        template <class, class> friend struct __cpp_basic_json_impl::AssignFromStringImpl;
+        template <class, class> friend struct __cpp_basic_json_impl::AssignFromArrayImpl;
+        template <class, class> friend struct __cpp_basic_json_impl::AssignFromMapImpl;
 
-        template <class, class, class> friend struct __cpp_basic_json_impl::AsImpl;
-        template <class, class, class> friend struct __cpp_basic_json_impl::AsIntegerImpl;
-        template <class, class, class> friend struct __cpp_basic_json_impl::AsFloatImpl;
-        template <class, class, class> friend struct __cpp_basic_json_impl::AsStringImpl;
-        template <class, class, class> friend struct __cpp_basic_json_impl::AsArrayImpl;
-        template <class, class, class> friend struct __cpp_basic_json_impl::AsMapImpl;
+        template <class, class> friend struct __cpp_basic_json_impl::AsImpl;
+        template <class, class> friend struct __cpp_basic_json_impl::AsIntegerImpl;
+        template <class, class> friend struct __cpp_basic_json_impl::AsFloatImpl;
+        template <class, class> friend struct __cpp_basic_json_impl::AsStringImpl;
+        template <class, class> friend struct __cpp_basic_json_impl::AsArrayImpl;
+        template <class, class> friend struct __cpp_basic_json_impl::AsMapImpl;
 
     private:
         const char *ep = nullptr;
-        //typename _ALLOC::template rebind<ThisType>::other _allocator;
+        //typename _Alloc::template rebind<BasicJSON<_Traits, _Alloc>>::other _allocator;
 
-        static inline ThisType *New() {
-            typedef typename _ALLOC::template rebind<ThisType>::other AllocatorType;
+        static inline BasicJSON<_Traits, _Alloc> *New() {
+            typedef typename _Alloc::template rebind<BasicJSON<_Traits, _Alloc>>::other AllocatorType;
             AllocatorType allocator;
-            typename AllocatorType::pointer p = allocator.allocate(sizeof(ThisType));
+            typename AllocatorType::pointer p = allocator.allocate(sizeof(BasicJSON<_Traits, _Alloc>));
             allocator.construct(p);
-            return (ThisType *)p;
+            return (BasicJSON<_Traits, _Alloc> *)p;
         }
 
-        static inline void Delete(ThisType *c) {
-            typedef typename _ALLOC::template rebind<ThisType>::other AllocatorType;
+        static inline void Delete(BasicJSON<_Traits, _Alloc> *c) {
+            typedef typename _Alloc::template rebind<BasicJSON<_Traits, _Alloc>>::other AllocatorType;
             AllocatorType allocator;
             allocator.destroy(c);
-            allocator.deallocate(c, sizeof(ThisType));
+            allocator.deallocate(c, sizeof(BasicJSON<_Traits, _Alloc>));
         }
 
         static const char *skip(const char *in) {
@@ -571,7 +576,7 @@ namespace jw {
         }
 
         const char *parse_array(const char *value) {
-            ThisType *child;
+            BasicJSON<_Traits, _Alloc> *child;
             if (*value != '[')  { ep = value; return nullptr; } // not an array!
 
             value = skip(value + 1);
@@ -589,7 +594,7 @@ namespace jw {
             ++this->_child->_valueInt64;
 
             while (*value == ',') {
-                ThisType *new_item = New();
+                BasicJSON<_Traits, _Alloc> *new_item = New();
                 if (new_item == nullptr) return nullptr;     // memory fail
                 child->_next = new_item; new_item->_prev = child; child = new_item;
                 value = skip(child->parse_value(skip(value + 1)));
@@ -611,7 +616,7 @@ namespace jw {
             if (*value == '}') return value + 1;    // empty array.
 
             _type = ValueType::Object;
-            ThisType *child;
+            BasicJSON<_Traits, _Alloc> *child;
             this->_child = New();
             if (this->_child == nullptr) return nullptr;        // memory fail
             this->_child->_next = child = New();
@@ -628,7 +633,7 @@ namespace jw {
             ++this->_child->_valueInt64;
 
             while (*value == ',') {
-                ThisType *new_item = New();
+                BasicJSON<_Traits, _Alloc> *new_item = New();
                 if (new_item == nullptr)   return nullptr; // memory fail
                 child->_next = new_item; new_item->_prev = child; child = new_item;
                 value = skip(child->parse_string(skip(value + 1)));
@@ -647,8 +652,8 @@ namespace jw {
             ep = value; return nullptr; // malformed.
         }
 
-        template <class _STRING>
-        void print_value(_STRING &ret, int depth, bool fmt) const {
+        template <class _String>
+        void print_value(_String &ret, int depth, bool fmt) const {
             switch (_type) {
             case ValueType::Null: ret.append("null"); break;
             case ValueType::False: ret.append("false"); break;
@@ -662,15 +667,15 @@ namespace jw {
             }
         }
 
-        template <class _STRING>
-        void print_integer(_STRING &ret) const {
+        template <class _String>
+        void print_integer(_String &ret) const {
             char str[21];  // 2^64+1 can be represented in 21 chars.
             sprintf(str, "%" PRId64, _valueInt64);
             ret.append(str);
         }
 
-        template <class _STRING>
-        void print_float(_STRING &ret) const {
+        template <class _String>
+        void print_float(_String &ret) const {
             char str[64];  // This is a nice tradeoff.
             double d = _valueDouble;
             if (fabs(floor(d) - d) <= DBL_EPSILON && fabs(d) < 1.0e60) sprintf(str, "%.0f", d);
@@ -679,8 +684,8 @@ namespace jw {
             ret.append(str);
         }
 
-        template <class _STRING>
-        static void print_string_ptr(_STRING &ret, const StringType &str) {
+        template <class _String>
+        static void print_string_ptr(_String &ret, const StringType &str) {
             if (str.empty()) return;
 
             const char *ptr; int len = 0; unsigned char token;
@@ -708,13 +713,13 @@ namespace jw {
             ret.append(1, '\"');
         }
 
-        template <class _STRING>
-        void print_string(_STRING &ret) const {
+        template <class _String>
+        void print_string(_String &ret) const {
             print_string_ptr(ret, _valueString);
         }
 
-        template <class _STRING>
-        void print_array(_STRING &ret, int depth, bool fmt) const {
+        template <class _String>
+        void print_array(_String &ret, int depth, bool fmt) const {
             size_t numentries = static_cast<size_t>(_child->_valueInt64);
 
             // Explicitly handle empty object case
@@ -724,7 +729,7 @@ namespace jw {
             }
 
             // Retrieve all the results:
-            ThisType *child = _child;
+            BasicJSON<_Traits, _Alloc> *child = _child;
             size_t i = 0;
             ret.append("[");
             for (child = _child->_next; child != _child; child = child->_next, ++i) {
@@ -734,8 +739,8 @@ namespace jw {
             ret.append("]");
         }
 
-        template <class _STRING>
-        void print_object(_STRING &ret, int depth, bool fmt) const {
+        template <class _String>
+        void print_object(_String &ret, int depth, bool fmt) const {
             size_t numentries = static_cast<size_t>(_child->_valueInt64);
 
             // Explicitly handle empty object case
@@ -747,7 +752,7 @@ namespace jw {
             }
 
             // Compose the output:
-            ThisType *child = _child->_next;
+            BasicJSON<_Traits, _Alloc> *child = _child->_next;
             ++depth;
             ret.append(1, '{'); if (fmt) ret.append(1, '\n');
             for (size_t i = 0; i < numentries; ++i) {
@@ -763,11 +768,10 @@ namespace jw {
             ret.append(1, '}');
         }
 
-        // TODO:
-        static bool Duplicate(ThisType &newitem, const ThisType &item, bool recurse) {
+        static bool Duplicate(BasicJSON<_Traits, _Alloc> &newitem, const BasicJSON<_Traits, _Alloc> &item, bool recurse) {
             newitem.clear();
-            const ThisType *cptr;
-            ThisType *nptr = nullptr, *newchild;
+            const BasicJSON<_Traits, _Alloc> *cptr;
+            BasicJSON<_Traits, _Alloc> *nptr = nullptr, *newchild;
             // Copy over all vars
             newitem._type = item._type, newitem._valueInt64 = item._valueInt64, newitem._valueDouble = item._valueDouble;
             newitem._valueString = item._valueString;
@@ -822,150 +826,142 @@ namespace jw {
     };
 
     // 流输出
-    template <class _OS, class _TRAITS, class _ALLOC>
-    static inline _OS &operator<<(_OS &os, const BasicJSON<_TRAITS, _ALLOC> &c) {
+    template <class _OS, class _Traits, class _Alloc>
+    static inline _OS &operator<<(_OS &os, const BasicJSON<_Traits, _Alloc> &c) {
         os << c.Print();
         return os;
     }
 
     // 重载与nullptr的比较
-    template <class _TRAITS, class _ALLOC>
-    static inline bool operator==(std::nullptr_t, const BasicJSON<_TRAITS, _ALLOC> &c) throw() {
+    template <class _Traits, class _Alloc>
+    static inline bool operator==(std::nullptr_t, const BasicJSON<_Traits, _Alloc> &c) throw() {
         return c.operator==(nullptr);
     }
 
-    template <class _TRAITS, class _ALLOC>
-    static inline bool operator!=(std::nullptr_t, const BasicJSON<_TRAITS, _ALLOC> &c) {
+    template <class _Traits, class _Alloc>
+    static inline bool operator!=(std::nullptr_t, const BasicJSON<_Traits, _Alloc> &c) {
         return c.operator!=(nullptr);
     }
 
     namespace __cpp_basic_json_impl {
-        template <class _TRAITS, class _ALLOC, class _T>
-        void AssignImpl<_TRAITS, _ALLOC, _T>::invoke(typename AssignImpl<_TRAITS, _ALLOC, _T>::JsonType &c,
-            typename AssignImpl<_TRAITS, _ALLOC, _T>::SourceType arg) {
+        template <class _JsonType, class _SourceType>
+        void AssignImpl<_JsonType, _SourceType>::invoke(_JsonType &c, _SourceType arg) {
             // TODO:
             //static_assert(0, "unimplemented type");
         }
 
-		template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, std::nullptr_t> {
-			typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-			typedef std::nullptr_t SourceType;
-			static inline void invoke(JsonType &c, SourceType) {
-				c._type = JsonType::ValueType::Null;
-			}
-		};
+        template <class _JsonType> struct AssignImpl<_JsonType, std::nullptr_t> {
+            typedef std::nullptr_t SourceType;
+            static inline void invoke(_JsonType &c, SourceType) {
+                c._type = _JsonType::ValueType::Null;
+            }
+        };
 
-		template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, bool> {
-			typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-			typedef bool SourceType;
-			static inline void invoke(JsonType &c, bool src) {
-				c._type = src ? JsonType::ValueType::True : JsonType::ValueType::False;
-			}
-		};
+        template <class _JsonType> struct AssignImpl<_JsonType, bool> {
+            typedef bool SourceType;
+            static inline void invoke(_JsonType &c, SourceType src) {
+                c._type = src ? _JsonType::ValueType::True : _JsonType::ValueType::False;
+            }
+        };
 
-		template <class _TRAITS, class _ALLOC, class _INTEGER> struct AssignFromIntegerImpl {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
+        template <class _JsonType, class _INTEGER> struct AssignFromIntegerImpl {
             typedef _INTEGER SourceType;
-            static inline void invoke(JsonType &c, SourceType arg) {
-                c._type = JsonType::ValueType::Integer;
+            static inline void invoke(_JsonType &c, SourceType arg) {
+                c._type = _JsonType::ValueType::Integer;
                 c._valueInt64 = arg;
             }
         };
 
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, char>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, char> { };
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, signed char>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, signed char> { };
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, unsigned char>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, unsigned char> { };
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, short>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, short> { };
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, unsigned short>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, unsigned short> { };
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, int>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, int> { };
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, unsigned>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, unsigned> { };
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, long>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, long> { };
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, unsigned long>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, unsigned long> { };
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, int64_t>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, int64_t> { };
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, uint64_t>
-            : AssignFromIntegerImpl<_TRAITS, _ALLOC, uint64_t> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, char>
+            : AssignFromIntegerImpl<_JsonType, char> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, signed char>
+            : AssignFromIntegerImpl<_JsonType, signed char> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, unsigned char>
+            : AssignFromIntegerImpl<_JsonType, unsigned char> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, short>
+            : AssignFromIntegerImpl<_JsonType, short> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, unsigned short>
+            : AssignFromIntegerImpl<_JsonType, unsigned short> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, int>
+            : AssignFromIntegerImpl<_JsonType, int> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, unsigned>
+            : AssignFromIntegerImpl<_JsonType, unsigned> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, long>
+            : AssignFromIntegerImpl<_JsonType, long> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, unsigned long>
+            : AssignFromIntegerImpl<_JsonType, unsigned long> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, int64_t>
+            : AssignFromIntegerImpl<_JsonType, int64_t> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, uint64_t>
+            : AssignFromIntegerImpl<_JsonType, uint64_t> { };
 
-        template <class _TRAITS, class _ALLOC, class _FLOAT> struct AssignFromFloatImpl {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _FLOAT SourceType;
-            static inline void invoke(JsonType &c, SourceType arg) {
-                c._type = JsonType::ValueType::Float;
+        template <class _JsonType, class _Float> struct AssignFromFloatImpl {
+            typedef _Float SourceType;
+            static inline void invoke(_JsonType &c, SourceType arg) {
+                c._type = _JsonType::ValueType::Float;
                 c._valueDouble = arg;
             }
         };
 
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, float>
-            : AssignFromFloatImpl<_TRAITS, _ALLOC, float> { };
-        template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, double>
-            : AssignFromFloatImpl<_TRAITS, _ALLOC, double> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, float>
+            : AssignFromFloatImpl<_JsonType, float> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, double>
+            : AssignFromFloatImpl<_JsonType, double> { };
 
         static inline const char *_ConvertString(const char *str) {
             return str;
         }
 
-        template <class _TR, class _AX>
-        static inline const char *_ConvertString(const std::basic_string<char, _TR, _AX> &str) {
+        template <class _Traits, class _Alloc>
+        static inline const char *_ConvertString(const std::basic_string<char, _Traits, _Alloc> &str) {
             return str.c_str();
         }
 
-        template <class _TRAITS, class _ALLOC, class _STRING> struct AssignFromStringImpl {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _STRING SourceType;
-            static inline void invoke(JsonType &c, const SourceType &arg) {
-                c._type = JsonType::ValueType::String;
+        template <class _JsonType, class _String> struct AssignFromStringImpl {
+            typedef _String SourceType;
+            static inline void invoke(_JsonType &c, const SourceType &arg) {
+                c._type = _JsonType::ValueType::String;
                 c._valueString = _ConvertString(arg);
             }
         };
 
-		template <class _TRAITS, class _ALLOC, size_t _N> struct AssignImpl<_TRAITS, _ALLOC, char [_N]>
-            : AssignFromStringImpl<_TRAITS, _ALLOC, char [_N]> { };
+        template <class _JsonType, size_t _N> struct AssignImpl<_JsonType, char [_N]>
+            : AssignFromStringImpl<_JsonType, char [_N]> { };
 
-		template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, char *>
-			: AssignFromStringImpl<_TRAITS, _ALLOC, char *> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, char *>
+            : AssignFromStringImpl<_JsonType, char *> { };
 
-		template <class _TRAITS, class _ALLOC> struct AssignImpl<_TRAITS, _ALLOC, const char *>
-			: AssignFromStringImpl<_TRAITS, _ALLOC, const char *> { };
+        template <class _JsonType> struct AssignImpl<_JsonType, const char *>
+            : AssignFromStringImpl<_JsonType, const char *> { };
 
-		template <class _TRAITS, class _ALLOC, class _TR, class _AX>
-        struct AssignImpl<_TRAITS, _ALLOC, std::basic_string<char, _TR, _AX> >
-            : AssignFromStringImpl<_TRAITS, _ALLOC, std::basic_string<char, _TR, _AX> > { };
+        template <class _JsonType, class _Traits, class _Alloc>
+        struct AssignImpl<_JsonType, std::basic_string<char, _Traits, _Alloc> >
+            : AssignFromStringImpl<_JsonType, std::basic_string<char, _Traits, _Alloc> > { };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AssignImpl<_TRAITS, _ALLOC, std::basic_string<char, _TRAITS, _ALLOC> > {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef std::basic_string<char, _TRAITS, _ALLOC> SourceType;
-            static inline void invoke(JsonType &c, const SourceType &arg) {
-                c._type = JsonType::ValueType::String;
-                c._valueString = arg;
-            }
-            static inline void invoke(JsonType &c, SourceType &&arg) {
-                c._type = JsonType::ValueType::String;
-                c._valueString = std::move(arg);
-            }
-        };
+        //template <class _JsonType>
+        //struct AssignImpl<_JsonType, typename _JsonType::StringType> {
+        //    typedef typename _JsonType::StringType SourceType;
+        //    static inline void invoke(_JsonType &c, const SourceType &arg) {
+        //        c._type = _JsonType::ValueType::String;
+        //        c._valueString = arg;
+        //    }
+        //    static inline void invoke(_JsonType &c, SourceType &&arg) {
+        //        c._type = _JsonType::ValueType::String;
+        //        c._valueString = std::move(arg);
+        //    }
+        //};
 
-        template <class _TRAITS, class _ALLOC, class _ELEM, size_t _N>
-        struct AssignImpl<_TRAITS, _ALLOC, _ELEM [_N]> {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _ELEM SourceType[_N];
-            static void invoke(JsonType &c, const SourceType &arg) {
-                c._type = JsonType::ValueType::Array;
-                c._child = JsonType::New();
-                JsonType *prev = c._child;
+        template <class _JsonType, class _Elem, size_t _N>
+        struct AssignImpl<_JsonType, _Elem [_N]> {
+            typedef _Elem SourceType[_N];
+            static void invoke(_JsonType &c, const SourceType &arg) {
+                c._type = _JsonType::ValueType::Array;
+                c._child = _JsonType::New();
+                _JsonType *prev = c._child;
                 prev->_next = prev->_prev = prev;
                 for (size_t i = 0; i < _N; ++i) {
-                    JsonType *item = JsonType::New();
-                    AssignImpl<_TRAITS, _ALLOC, _ELEM>::invoke(*item, arg[i]);
+                    _JsonType *item = _JsonType::New();
+                    AssignImpl<_JsonType, _Elem>::invoke(*item, arg[i]);
                     prev->_next = item;
                     item->_prev = prev;
                     item->_next = c._child;
@@ -974,14 +970,14 @@ namespace jw {
                     prev = item;
                 }
             }
-            static void invoke(JsonType &c, SourceType &&arg) {
-                c._type = JsonType::ValueType::Array;
-                c._child = JsonType::New();
-                JsonType *prev = c._child;
+            static void invoke(_JsonType &c, SourceType &&arg) {
+                c._type = _JsonType::ValueType::Array;
+                c._child = _JsonType::New();
+                _JsonType *prev = c._child;
                 prev->_next = prev->_prev = prev;
                 for (size_t i = 0; i < _N; ++i) {
-                    JsonType *item = JsonType::New();
-                    AssignImpl<_TRAITS, _ALLOC, _ELEM>::invoke(*item, std::move(arg[i]));
+                    _JsonType *item = _JsonType::New();
+                    AssignImpl<_JsonType, _Elem>::invoke(*item, std::move(arg[i]));
                     prev->_next = item;
                     item->_prev = prev;
                     item->_next = c._child;
@@ -992,18 +988,17 @@ namespace jw {
             }
         };
 
-        template <class _TRAITS, class _ALLOC, class _ARRAY>
+        template <class _JsonType, class _Array>
         struct AssignFromArrayImpl {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _ARRAY SourceType;
-            static void invoke(JsonType &c, const SourceType &arg) {
-                c._type = JsonType::ValueType::Array;
-                c._child = JsonType::New();
-                JsonType *prev = c._child;
+            typedef _Array SourceType;
+            static void invoke(_JsonType &c, const SourceType &arg) {
+                c._type = _JsonType::ValueType::Array;
+                c._child = _JsonType::New();
+                _JsonType *prev = c._child;
                 prev->_next = prev->_prev = prev;
                 for (typename SourceType::const_iterator it = arg.begin(); it != arg.end(); ++it) {
-                    JsonType *item = JsonType::New();
-                    AssignImpl<_TRAITS, _ALLOC, typename _ARRAY::value_type>::invoke(*item, *it);
+                    _JsonType *item = _JsonType::New();
+                    AssignImpl<_JsonType, typename SourceType::value_type>::invoke(*item, *it);
                     prev->_next = item;
                     item->_prev = prev;
                     item->_next = c._child;
@@ -1012,15 +1007,14 @@ namespace jw {
                     prev = item;
                 }
             }
-
-            static void invoke(JsonType &c, SourceType &&arg) {
-                c._type = JsonType::ValueType::Array;
-                c._child = JsonType::New();
-                JsonType *prev = c._child;
+            static void invoke(_JsonType &c, SourceType &&arg) {
+                c._type = _JsonType::ValueType::Array;
+                c._child = _JsonType::New();
+                _JsonType *prev = c._child;
                 prev->_next = prev->_prev = prev;
                 for (typename SourceType::iterator it = arg.begin(); it != arg.end(); ++it) {
-                    JsonType *item = JsonType::New();
-                    AssignImpl<_TRAITS, _ALLOC, typename _ARRAY::value_type>::invoke(*item, std::move(*it));
+                    _JsonType *item = _JsonType::New();
+                    AssignImpl<_JsonType, typename SourceType::value_type>::invoke(*item, std::move(*it));
                     prev->_next = item;
                     item->_prev = prev;
                     item->_next = c._child;
@@ -1031,50 +1025,49 @@ namespace jw {
             }
         };
 
-        template <class _TRAITS, class _ALLOC, class _T, class _AX>
-        struct AssignImpl<_TRAITS, _ALLOC, std::vector<_T, _AX> >
-            : AssignFromArrayImpl<_TRAITS, _ALLOC, std::vector<_T, _AX> > {
+        template <class _JsonType, class _T, class _Alloc>
+        struct AssignImpl<_JsonType, std::vector<_T, _Alloc> >
+            : AssignFromArrayImpl<_JsonType, std::vector<_T, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _T, class _AX>
-        struct AssignImpl<_TRAITS, _ALLOC, std::list<_T, _AX> >
-            : AssignFromArrayImpl<_TRAITS, _ALLOC, std::list<_T, _AX> > {
+        template <class _JsonType, class _T, class _Alloc>
+        struct AssignImpl<_JsonType, std::list<_T, _Alloc> >
+            : AssignFromArrayImpl<_JsonType, std::list<_T, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _T, class _CMP, class _AX>
-        struct AssignImpl<_TRAITS, _ALLOC, std::set<_T, _CMP, _AX> >
-            : AssignFromArrayImpl<_TRAITS, _ALLOC, std::set<_T, _CMP, _AX> > {
+        template <class _JsonType, class _T, class _Compare, class _Alloc>
+        struct AssignImpl<_JsonType, std::set<_T, _Compare, _Alloc> >
+            : AssignFromArrayImpl<_JsonType, std::set<_T, _Compare, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _T, class _CMP, class _AX>
-        struct AssignImpl<_TRAITS, _ALLOC, std::multiset<_T, _CMP, _AX> >
-            : AssignFromArrayImpl<_TRAITS, _ALLOC, std::multiset<_T, _CMP, _AX> > {
+        template <class _JsonType, class _T, class _Compare, class _Alloc>
+        struct AssignImpl<_JsonType, std::multiset<_T, _Compare, _Alloc> >
+            : AssignFromArrayImpl<_JsonType, std::multiset<_T, _Compare, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _T, class _HASH, class _EQ, class _AX>
-        struct AssignImpl<_TRAITS, _ALLOC, std::unordered_set<_T, _HASH, _EQ, _AX> >
-            : AssignFromArrayImpl<_TRAITS, _ALLOC, std::unordered_set<_T, _HASH, _EQ, _AX> > {
+        template <class _JsonType, class _T, class _Hash, class _Pred, class _Alloc>
+        struct AssignImpl<_JsonType, std::unordered_set<_T, _Hash, _Pred, _Alloc> >
+            : AssignFromArrayImpl<_JsonType, std::unordered_set<_T, _Hash, _Pred, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _T, class _HASH, class _EQ, class _AX>
-        struct AssignImpl<_TRAITS, _ALLOC, std::unordered_multiset<_T, _HASH, _EQ, _AX> >
-            : AssignFromArrayImpl<_TRAITS, _ALLOC, std::unordered_multiset<_T, _HASH, _EQ, _AX> > {
+        template <class _JsonType, class _T, class _Hash, class _Pred, class _Alloc>
+        struct AssignImpl<_JsonType, std::unordered_multiset<_T, _Hash, _Pred, _Alloc> >
+            : AssignFromArrayImpl<_JsonType, std::unordered_multiset<_T, _Hash, _Pred, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _MAP>
+        template <class _JsonType, class _Map>
         struct AssignFromMapImpl {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _MAP SourceType;
-            static void invoke(JsonType &c, const SourceType &arg) {
-                static_assert(std::is_convertible<const char *, typename _MAP::key_type>::value, "key_type must be able to convert to const char *");
-                c._type = JsonType::ValueType::Object;
-                c._child = JsonType::New();
-                JsonType *prev = c._child;
+            typedef _Map SourceType;
+            static void invoke(_JsonType &c, const SourceType &arg) {
+                static_assert(std::is_convertible<const char *, typename SourceType::key_type>::value, "key_type must be able to convert to const char *");
+                c._type = _JsonType::ValueType::Object;
+                c._child = _JsonType::New();
+                _JsonType *prev = c._child;
                 prev->_next = prev->_prev = prev;
                 for (typename SourceType::const_iterator it = arg.begin(); it != arg.end(); ++it) {
-                    JsonType *item = JsonType::New();
+                    _JsonType *item = _JsonType::New();
                     item->_key = _ConvertString(it->first);
-                    AssignImpl<_TRAITS, _ALLOC, typename _MAP::mapped_type>::invoke(*item, it->second);
+                    AssignImpl<_JsonType, typename SourceType::mapped_type>::invoke(*item, it->second);
                     prev->_next = item;
                     item->_prev = prev;
                     item->_next = c._child;
@@ -1084,16 +1077,16 @@ namespace jw {
                 }
             }
 
-            static void invoke(JsonType &c, SourceType &&arg) {
-                static_assert(std::is_convertible<const char *, typename _MAP::key_type>::value, "key_type must be able to convert to const char *");
-                c._type = JsonType::ValueType::Object;
-                c._child = JsonType::New();
-                JsonType *prev = c._child;
+            static void invoke(_JsonType &c, SourceType &&arg) {
+                static_assert(std::is_convertible<const char *, typename SourceType::key_type>::value, "key_type must be able to convert to const char *");
+                c._type = _JsonType::ValueType::Object;
+                c._child = _JsonType::New();
+                _JsonType *prev = c._child;
                 prev->_next = prev->_prev = prev;
                 for (typename SourceType::iterator it = arg.begin(); it != arg.end(); ++it) {
-                    JsonType *item = JsonType::New();
+                    _JsonType *item = _JsonType::New();
                     item->_key = _ConvertString(it->first);
-                    AssignImpl<_TRAITS, _ALLOC, typename _MAP::mapped_type>::invoke(*item, std::move(it->second));
+                    AssignImpl<_JsonType, typename SourceType::mapped_type>::invoke(*item, std::move(it->second));
                     prev->_next = item;
                     item->_prev = prev;
                     item->_next = c._child;
@@ -1104,48 +1097,46 @@ namespace jw {
             }
         };
 
-        template <class _TRAITS, class _ALLOC, class _KEY, class _VAL, class _CMP, class _AX>
-        struct AssignImpl<_TRAITS, _ALLOC, std::map<_KEY, _VAL, _CMP, _AX> >
-            : AssignFromMapImpl<_TRAITS, _ALLOC, std::map<_KEY, _VAL, _CMP, _AX> > {
+        template <class _JsonType, class _Key, class _Val, class _Compare, class _Alloc>
+        struct AssignImpl<_JsonType, std::map<_Key, _Val, _Compare, _Alloc> >
+            : AssignFromMapImpl<_JsonType, std::map<_Key, _Val, _Compare, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _KEY, class _VAL, class _CMP, class _AX>
-        struct AssignImpl<_TRAITS, _ALLOC, std::multimap<_KEY, _VAL, _CMP, _AX> >
-            : AssignFromMapImpl<_TRAITS, _ALLOC, std::multimap<_KEY, _VAL, _CMP, _AX> > {
+        template <class _JsonType, class _Key, class _Val, class _Compare, class _Alloc>
+        struct AssignImpl<_JsonType, std::multimap<_Key, _Val, _Compare, _Alloc> >
+            : AssignFromMapImpl<_JsonType, std::multimap<_Key, _Val, _Compare, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _KEY, class _VAL, class _HASH, class _EQ, class _AX>
-        struct AssignImpl<_TRAITS, _ALLOC, std::unordered_map<_KEY, _VAL, _HASH, _EQ, _AX> >
-            : AssignFromMapImpl<_TRAITS, _ALLOC, std::unordered_map<_KEY, _VAL, _HASH, _EQ, _AX> > {
+        template <class _JsonType, class _Key, class _Val, class _Hash, class _Pred, class _Alloc>
+        struct AssignImpl<_JsonType, std::unordered_map<_Key, _Val, _Hash, _Pred, _Alloc> >
+            : AssignFromMapImpl<_JsonType, std::unordered_map<_Key, _Val, _Hash, _Pred, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _KEY, class _VAL, class _HASH, class _EQ, class _AX>
-        struct AssignImpl<_TRAITS, _ALLOC, std::unordered_multimap<_KEY, _VAL, _HASH, _EQ, _AX> >
-            : AssignFromMapImpl<_TRAITS, _ALLOC, std::unordered_multimap<_KEY, _VAL, _HASH, _EQ, _AX> > {
+        template <class _JsonType, class _Key, class _Val, class _Hash, class _Pred, class _Alloc>
+        struct AssignImpl<_JsonType, std::unordered_multimap<_Key, _Val, _Hash, _Pred, _Alloc> >
+            : AssignFromMapImpl<_JsonType, std::unordered_multimap<_Key, _Val, _Hash, _Pred, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _T>
-        struct AssignImpl<_TRAITS, _ALLOC, std::initializer_list<_T> > {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
+        template <class _JsonType, class _T>
+        struct AssignImpl<_JsonType, std::initializer_list<_T> > {
             typedef std::initializer_list<_T> SourceType;
-            static void invoke(JsonType &c, const SourceType &arg) {
+            static void invoke(_JsonType &c, const SourceType &arg) {
                 // TODO:
             }
         };
 
-        template <class _TRAITS, class _ALLOC, class _T>
-        typename AsImpl<_TRAITS, _ALLOC, _T>::TargetType
-            AsImpl<_TRAITS, _ALLOC, _T>::invoke(const typename AsImpl<_TRAITS, _ALLOC, _T>::JsonType &c) {
-            std::basic_stringstream<char, _TRAITS, typename _ALLOC::template rebind<char>::other> ss;
+        template <class _JsonType, class _TargetType>
+        _TargetType AsImpl<_JsonType, _TargetType>::invoke(const _JsonType &c) {
+            std::basic_stringstream<char, typename _JsonType::StringType::value_type, typename _JsonType::StringType::allocator_type> ss;
             switch (c._type) {
-            case JsonType::ValueType::Null: break;
-            case JsonType::ValueType::False: ss << 0; break;
-            case JsonType::ValueType::True: ss << 1; break;
-            case JsonType::ValueType::Integer: ss << c._valueInt64; break;
-            case JsonType::ValueType::Float: ss << c._valueDouble; break;
-            case JsonType::ValueType::String: ss << c._valueString; break;
-            case JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to target type"); break;
-            case JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to target type"); break;
+            case _JsonType::ValueType::Null: break;
+            case _JsonType::ValueType::False: ss << 0; break;
+            case _JsonType::ValueType::True: ss << 1; break;
+            case _JsonType::ValueType::Integer: ss << c._valueInt64; break;
+            case _JsonType::ValueType::Float: ss << c._valueDouble; break;
+            case _JsonType::ValueType::String: ss << c._valueString; break;
+            case _JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to target type"); break;
+            case _JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to target type"); break;
             default: throw std::out_of_range("JSON type out of range"); break;
             }
             TargetType ret = TargetType();
@@ -1154,218 +1145,212 @@ namespace jw {
             return ret;
         }
 
-        //template <class _TRAITS, class _ALLOC>
-        //struct AsImpl<_TRAITS, _ALLOC, const BasicJSON<_TRAITS, _ALLOC> *> {
-        //    typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-        //    typedef const BasicJSON<_TRAITS, _ALLOC> *TargetType;
-        //    static TargetType invoke(const JsonType &c) {
+        //template <class _JsonType>
+        //struct AsImpl<_JsonType, const _JsonType *> {
+        //    typedef const _JsonType *TargetType;
+        //    static TargetType invoke(const _JsonType &c) {
         //        return &c;
         //    }
         //};
 
-        template <class _TRAITS, class _ALLOC, class _INTEGER>
+        template <class _JsonType, class _Integer>
         struct AsIntegerImpl {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _INTEGER TargetType;
-            static TargetType invoke(const JsonType &c) {
+            typedef _Integer TargetType;
+            static TargetType invoke(const _JsonType &c) {
                 switch (c._type) {
-                case JsonType::ValueType::Null: return TargetType(0);
-                case JsonType::ValueType::False: return TargetType(0);
-                case JsonType::ValueType::True: return TargetType(1);
-                case JsonType::ValueType::Integer: return static_cast<TargetType>(c._valueInt64);
-                case JsonType::ValueType::Float: return static_cast<TargetType>(c._valueDouble);
-                case JsonType::ValueType::String: return static_cast<TargetType>(atoll(c._valueString.c_str()));
-                case JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to Integer"); break;
-                case JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to Integer"); break;
+                case _JsonType::ValueType::Null: return TargetType(0);
+                case _JsonType::ValueType::False: return TargetType(0);
+                case _JsonType::ValueType::True: return TargetType(1);
+                case _JsonType::ValueType::Integer: return static_cast<TargetType>(c._valueInt64);
+                case _JsonType::ValueType::Float: return static_cast<TargetType>(c._valueDouble);
+                case _JsonType::ValueType::String: return static_cast<TargetType>(atoll(c._valueString.c_str()));
+                case _JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to Integer"); break;
+                case _JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to Integer"); break;
                 default: throw std::out_of_range("JSON type out of range"); break;
                 }
             }
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, char>
-            : AsIntegerImpl<_TRAITS, _ALLOC, char> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, char>
+            : AsIntegerImpl<_JsonType, char> {
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, signed char>
-            : AsIntegerImpl<_TRAITS, _ALLOC, signed char> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, signed char>
+            : AsIntegerImpl<_JsonType, signed char> {
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, unsigned char>
-            : AsIntegerImpl<_TRAITS, _ALLOC, unsigned char> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, unsigned char>
+            : AsIntegerImpl<_JsonType, unsigned char> {
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, short>
-            : AsIntegerImpl<_TRAITS, _ALLOC, short> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, short>
+            : AsIntegerImpl<_JsonType, short> {
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, unsigned short>
-            : AsIntegerImpl<_TRAITS, _ALLOC, unsigned short> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, unsigned short>
+            : AsIntegerImpl<_JsonType, unsigned short> {
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, int>
-            : AsIntegerImpl<_TRAITS, _ALLOC, int> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, int>
+            : AsIntegerImpl<_JsonType, int> {
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, unsigned>
-            : AsIntegerImpl<_TRAITS, _ALLOC, unsigned> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, unsigned>
+            : AsIntegerImpl<_JsonType, unsigned> {
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, long>
-            : AsIntegerImpl<_TRAITS, _ALLOC, long> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, long>
+            : AsIntegerImpl<_JsonType, long> {
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, unsigned long>
-            : AsIntegerImpl<_TRAITS, _ALLOC, unsigned long> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, unsigned long>
+            : AsIntegerImpl<_JsonType, unsigned long> {
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, int64_t>
-            : AsIntegerImpl<_TRAITS, _ALLOC, int64_t> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, int64_t>
+            : AsIntegerImpl<_JsonType, int64_t> {
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, uint64_t>
-            : AsIntegerImpl<_TRAITS, _ALLOC, uint64_t> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, uint64_t>
+            : AsIntegerImpl<_JsonType, uint64_t> {
         };
 
-        template <class _TRAITS, class _ALLOC, class _FLOAT>
+        template <class _JsonType, class _Float>
         struct AsFloatImpl {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _FLOAT TargetType;
-            static TargetType invoke(const JsonType &c) {
+            typedef _Float TargetType;
+            static TargetType invoke(const _JsonType &c) {
                 switch (c._type) {
-                case JsonType::ValueType::Null: return TargetType(0);
-                case JsonType::ValueType::False: return TargetType(0);
-                case JsonType::ValueType::True: return TargetType(1);
-                case JsonType::ValueType::Integer: return static_cast<TargetType>(c._valueInt64);
-                case JsonType::ValueType::Float: return static_cast<TargetType>(c._valueDouble);
-                case JsonType::ValueType::String: return static_cast<TargetType>(atof(c._valueString.c_str()));
-                case JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to Float"); break;
-                case JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to Float"); break;
+                case _JsonType::ValueType::Null: return TargetType(0);
+                case _JsonType::ValueType::False: return TargetType(0);
+                case _JsonType::ValueType::True: return TargetType(1);
+                case _JsonType::ValueType::Integer: return static_cast<TargetType>(c._valueInt64);
+                case _JsonType::ValueType::Float: return static_cast<TargetType>(c._valueDouble);
+                case _JsonType::ValueType::String: return static_cast<TargetType>(atof(c._valueString.c_str()));
+                case _JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to Float"); break;
+                case _JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to Float"); break;
                 default: throw std::out_of_range("JSON type out of range"); break;
                 }
             }
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, float>
-            : AsFloatImpl<_TRAITS, _ALLOC, float> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, float>
+            : AsFloatImpl<_JsonType, float> {
         };
 
-        template <class _TRAITS, class _ALLOC>
-        struct AsImpl<_TRAITS, _ALLOC, double>
-            : AsFloatImpl<_TRAITS, _ALLOC, double> {
+        template <class _JsonType>
+        struct AsImpl<_JsonType, double>
+            : AsFloatImpl<_JsonType, double> {
         };
 
-        template <class _TRAITS, class _ALLOC, class _STRING>
+        template <class _JsonType, class _String>
         struct AsStringImpl {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _STRING TargetType;
-            static TargetType invoke(const JsonType &c) {
+            typedef _String TargetType;
+            static TargetType invoke(const _JsonType &c) {
                 switch (c._type) {
-                case JsonType::ValueType::Null: return TargetType();
-                case JsonType::ValueType::False: return TargetType("false");
-                case JsonType::ValueType::True: return TargetType("true");
-                case JsonType::ValueType::Integer: {
+                case _JsonType::ValueType::Null: return TargetType();
+                case _JsonType::ValueType::False: return TargetType("false");
+                case _JsonType::ValueType::True: return TargetType("true");
+                case _JsonType::ValueType::Integer: {
                     char str[21];  // 2^64+1 can be represented in 21 chars.
                     sprintf(str, "%" PRId64, c._valueInt64);
                     return TargetType(str);
                 }
-                case JsonType::ValueType::Float: {
-                    std::basic_ostringstream<typename _STRING::value_type, typename _STRING::traits_type, typename _STRING::allocator_type> ss;
+                case _JsonType::ValueType::Float: {
+                    std::basic_ostringstream<typename _String::value_type, typename _String::traits_type, typename _String::allocator_type> ss;
                     ss << c._valueDouble;
                     return ss.str();
                 }
-                case JsonType::ValueType::String: return TargetType(c._valueString.begin(), c._valueString.end());
-                case JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to String"); break;
-                case JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to String"); break;
+                case _JsonType::ValueType::String: return TargetType(c._valueString.begin(), c._valueString.end());
+                case _JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to String"); break;
+                case _JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to String"); break;
                 default: throw std::out_of_range("JSON type out of range"); break;
                 }
             }
         };
 
-        template <class _TRAITS, class _ALLOC, class _CHAR, class _TR, class _AX>
-        struct AsImpl<_TRAITS, _ALLOC, std::basic_string<_CHAR, _TR, _AX> >
-            : AsStringImpl<_TRAITS, _ALLOC, std::basic_string<_CHAR, _TR, _AX> > {
+        template <class _JsonType, class _Char, class _Traits, class _Alloc>
+        struct AsImpl<_JsonType, std::basic_string<_Char, _Traits, _Alloc> >
+            : AsStringImpl<_JsonType, std::basic_string<_Char, _Traits, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _ARRAY>
+        template <class _JsonType, class _Array>
         struct AsArrayImpl {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _ARRAY TargetType;
-            static TargetType invoke(const JsonType &c) {
+            typedef _Array TargetType;
+            static TargetType invoke(const _JsonType &c) {
                 switch (c._type) {
-                case JsonType::ValueType::Null: return TargetType();
-                case JsonType::ValueType::False: throw std::logic_error("Cannot convert JSON_False to Array"); break;
-                case JsonType::ValueType::True: throw std::logic_error("Cannot convert JSON_True to Array"); break;
-                case JsonType::ValueType::Integer: throw std::logic_error("Cannot convert JSON_Integer to Array"); break;
-                case JsonType::ValueType::Float: throw std::logic_error("Cannot convert JSON_Float to Array"); break;
-                case JsonType::ValueType::String: throw std::logic_error("Cannot convert JSON_String to Array"); break;
-                case JsonType::ValueType::Array: {
+                case _JsonType::ValueType::Null: return TargetType();
+                case _JsonType::ValueType::False: throw std::logic_error("Cannot convert JSON_False to Array"); break;
+                case _JsonType::ValueType::True: throw std::logic_error("Cannot convert JSON_True to Array"); break;
+                case _JsonType::ValueType::Integer: throw std::logic_error("Cannot convert JSON_Integer to Array"); break;
+                case _JsonType::ValueType::Float: throw std::logic_error("Cannot convert JSON_Float to Array"); break;
+                case _JsonType::ValueType::String: throw std::logic_error("Cannot convert JSON_String to Array"); break;
+                case _JsonType::ValueType::Array: {
                     TargetType ret = TargetType();
                     std::transform(c.begin(), c.end(), std::inserter(ret, ret.begin()),
-                        &AsImpl<_TRAITS, _ALLOC, typename TargetType::value_type>::invoke);
+                        &AsImpl<_JsonType, typename TargetType::value_type>::invoke);
                     return ret;
                 }
-                case JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to Array"); break;
+                case _JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to Array"); break;
                 default: throw std::out_of_range("JSON type out of range"); break;
                 }
             }
         };
 
-        template <class _TRAITS, class _ALLOC, class _T, class _AX>
-        struct AsImpl<_TRAITS, _ALLOC, std::vector<_T, _AX> >
-            : AsArrayImpl<_TRAITS, _ALLOC, std::vector<_T, _AX> > {
+        template <class _JsonType, class _T, class _Alloc>
+        struct AsImpl<_JsonType, std::vector<_T, _Alloc> >
+            : AsArrayImpl<_JsonType, std::vector<_T, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _T, class _AX>
-        struct AsImpl<_TRAITS, _ALLOC, std::list<_T, _AX> >
-            : AsArrayImpl<_TRAITS, _ALLOC, std::list<_T, _AX> > {
+        template <class _JsonType, class _T, class _Alloc>
+        struct AsImpl<_JsonType, std::list<_T, _Alloc> >
+            : AsArrayImpl<_JsonType, std::list<_T, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _T, class _CMP, class _AX>
-        struct AsImpl<_TRAITS, _ALLOC, std::set<_T, _CMP, _AX> >
-            : AsArrayImpl<_TRAITS, _ALLOC, std::set<_T, _CMP, _AX> > {
+        template <class _JsonType, class _T, class _Compare, class _Alloc>
+        struct AsImpl<_JsonType, std::set<_T, _Compare, _Alloc> >
+            : AsArrayImpl<_JsonType, std::set<_T, _Compare, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _T, class _CMP, class _AX>
-        struct AsImpl<_TRAITS, _ALLOC, std::multiset<_T, _CMP, _AX> >
-            : AsArrayImpl<_TRAITS, _ALLOC, std::multiset<_T, _CMP, _AX> > {
+        template <class _JsonType, class _T, class _Compare, class _Alloc>
+        struct AsImpl<_JsonType, std::multiset<_T, _Compare, _Alloc> >
+            : AsArrayImpl<_JsonType, std::multiset<_T, _Compare, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _T, class _HASH, class _EQ, class _AX>
-        struct AsImpl<_TRAITS, _ALLOC, std::unordered_set<_T, _HASH, _EQ, _AX> >
-            : AsArrayImpl<_TRAITS, _ALLOC, std::unordered_set<_T, _HASH, _EQ, _AX> > {
+        template <class _JsonType, class _T, class _Hash, class _Pred, class _Alloc>
+        struct AsImpl<_JsonType, std::unordered_set<_T, _Hash, _Pred, _Alloc> >
+            : AsArrayImpl<_JsonType, std::unordered_set<_T, _Hash, _Pred, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _T, class _HASH, class _EQ, class _AX>
-        struct AsImpl<_TRAITS, _ALLOC, std::unordered_multiset<_T, _HASH, _EQ, _AX> >
-            : AsArrayImpl<_TRAITS, _ALLOC, std::unordered_multiset<_T, _HASH, _EQ, _AX> > {
+        template <class _JsonType, class _T, class _Hash, class _Pred, class _Alloc>
+        struct AsImpl<_JsonType, std::unordered_multiset<_T, _Hash, _Pred, _Alloc> >
+            : AsArrayImpl<_JsonType, std::unordered_multiset<_T, _Hash, _Pred, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _MAP>
+        template <class _JsonType, class _Map>
         struct AsMapImpl {
-            typedef BasicJSON<_TRAITS, _ALLOC> JsonType;
-            typedef _MAP TargetType;
-            static TargetType invoke(const JsonType &c) {
+            typedef _Map TargetType;
+            static TargetType invoke(const _JsonType &c) {
                 switch (c._type) {
-                case JsonType::ValueType::Null: return TargetType();
-                case JsonType::ValueType::False: throw std::logic_error("Cannot convert JSON_False to Object"); break;
-                case JsonType::ValueType::True: throw std::logic_error("Cannot convert JSON_True to Object"); break;
-                case JsonType::ValueType::Integer: throw std::logic_error("Cannot convert JSON_Integer to Object"); break;
-                case JsonType::ValueType::Float: throw std::logic_error("Cannot convert JSON_Float to Object"); break;
-                case JsonType::ValueType::String: throw std::logic_error("Cannot convert JSON_String to Object"); break;
-                case JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to Object"); break;
-                case JsonType::ValueType::Object: {
+                case _JsonType::ValueType::Null: return TargetType();
+                case _JsonType::ValueType::False: throw std::logic_error("Cannot convert JSON_False to Object"); break;
+                case _JsonType::ValueType::True: throw std::logic_error("Cannot convert JSON_True to Object"); break;
+                case _JsonType::ValueType::Integer: throw std::logic_error("Cannot convert JSON_Integer to Object"); break;
+                case _JsonType::ValueType::Float: throw std::logic_error("Cannot convert JSON_Float to Object"); break;
+                case _JsonType::ValueType::String: throw std::logic_error("Cannot convert JSON_String to Object"); break;
+                case _JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to Object"); break;
+                case _JsonType::ValueType::Object: {
                     TargetType ret = TargetType();
                     std::transform(c.begin(), c.end(), std::inserter(ret, ret.begin()), &_make_value);
                     return ret;
@@ -1374,30 +1359,30 @@ namespace jw {
                 }
             }
         private:
-            static inline typename TargetType::value_type _make_value(const JsonType &j) {
+            static inline typename TargetType::value_type _make_value(const _JsonType &j) {
                 return typename TargetType::value_type(typename TargetType::key_type(j._key.begin(), j._key.end()),
-                    AsImpl<_TRAITS, _ALLOC, typename TargetType::mapped_type>::invoke(j));
+                    AsImpl<_JsonType, typename TargetType::mapped_type>::invoke(j));
             }
         };
 
-        template <class _TRAITS, class _ALLOC, class _STRING, class _VAL, class _CMP, class _AX>
-        struct AsImpl<_TRAITS, _ALLOC, std::map<_STRING, _VAL, _CMP, _AX> >
-            : AsMapImpl<_TRAITS, _ALLOC, std::map<_STRING, _VAL, _CMP, _AX> > {
+        template <class _JsonType, class _String, class _Val, class _Compare, class _Alloc>
+        struct AsImpl<_JsonType, std::map<_String, _Val, _Compare, _Alloc> >
+            : AsMapImpl<_JsonType, std::map<_String, _Val, _Compare, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _STRING, class _VAL, class _CMP, class _AX>
-        struct AsImpl<_TRAITS, _ALLOC, std::multimap<_STRING, _VAL, _CMP, _AX> >
-            : AsMapImpl<_TRAITS, _ALLOC, std::multimap<_STRING, _VAL, _CMP, _AX> > {
+        template <class _JsonType, class _String, class _Val, class _Compare, class _Alloc>
+        struct AsImpl<_JsonType, std::multimap<_String, _Val, _Compare, _Alloc> >
+            : AsMapImpl<_JsonType, std::multimap<_String, _Val, _Compare, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _STRING, class _VAL, class _HASH, class _EQ, class _AX>
-        struct AsImpl<_TRAITS, _ALLOC, std::unordered_map<_STRING, _VAL, _HASH, _EQ, _AX> >
-            : AsMapImpl<_TRAITS, _ALLOC, std::unordered_map<_STRING, _VAL, _HASH, _EQ, _AX> > {
+        template <class _JsonType, class _String, class _Val, class _Hash, class _Pred, class _Alloc>
+        struct AsImpl<_JsonType, std::unordered_map<_String, _Val, _Hash, _Pred, _Alloc> >
+            : AsMapImpl<_JsonType, std::unordered_map<_String, _Val, _Hash, _Pred, _Alloc> > {
         };
 
-        template <class _TRAITS, class _ALLOC, class _STRING, class _VAL, class _HASH, class _EQ, class _AX>
-        struct AsImpl<_TRAITS, _ALLOC, std::unordered_multimap<_STRING, _VAL, _HASH, _EQ, _AX> >
-            : AsMapImpl<_TRAITS, _ALLOC, std::unordered_multimap<_STRING, _VAL, _HASH, _EQ, _AX> > {
+        template <class _JsonType, class _String, class _Val, class _Hash, class _Pred, class _Alloc>
+        struct AsImpl<_JsonType, std::unordered_multimap<_String, _Val, _Hash, _Pred, _Alloc> >
+            : AsMapImpl<_JsonType, std::unordered_multimap<_String, _Val, _Hash, _Pred, _Alloc> > {
         };
     }
 
