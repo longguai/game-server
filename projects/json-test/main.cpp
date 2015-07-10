@@ -369,17 +369,22 @@ int main(int argc, char *argv[])
 
         {
             auto it = std::find_if(jv.rbegin(), jv.rend(), [](const cppJSON &j) { return j.as<int>() == 3; });
-            std::for_each(it.base(), jv.end(), [](const cppJSON &j) {
+            std::cout << *jv.insert(it.base(), 100) << std::endl;
+            std::cout << *jv.erase(jv.begin()) << std::endl;
+            std::for_each(jv.begin(), jv.end(), [](const cppJSON &j) {
                 std::cout << j << "  ";
             });
             std::cout << std::endl;
         }
         {
             auto it = std::find(vec.rbegin(), vec.rend(), 3);
-            std::for_each(it.base(), vec.end(), [](int i) { std::cout << i << "  "; });
+            std::cout << *vec.insert(it.base(), 100) << std::endl;
+            std::cout << *vec.erase(vec.begin()) << std::endl;
+            //std::for_each(it.base(), vec.end(), [](int i) { std::cout << i << "  "; });
+            std::for_each(vec.begin(), vec.end(), [](int i) { std::cout << i << "  "; });
             std::cout << std::endl;
 
-            vec.erase(vec.begin(), vec.end());
+            //vec.erase(vec.begin(), vec.end());
             //vec.insert()
         }
 
@@ -392,8 +397,11 @@ int main(int argc, char *argv[])
             std::cout << j << "  ";
         });
         std::cout << std::endl;
-        std::vector<int>::const_iterator it;
 
+        //while (!jv.empty()) jv.erase(jv.begin());
+        for (auto it = jv.begin(); it != jv.end(); )
+            it = jv.erase(it);
+        std::cout << std::endl;
     }
 
     //new int;

@@ -420,6 +420,89 @@ namespace jw {
             return const_reverse_iterator(_child->_next);
         }
 
+        template <class _T>
+        iterator insert(const_iterator position, _T &&val) {
+            assert(_type == ValueType::Array);
+            BasicJSON<_Traits, _Alloc> *ptr = position._ptr;
+#if (defined _DEBUG) || (defined DEBUG)
+            assert(_RangeCheck(ptr));
+#endif
+            return _DoInsert(ptr, std::forward<_T>(val));
+        }
+
+        template <class _Key, class _Val>
+        std::pair<iterator, bool> insert(std::pair<_Key, _Val> &&val);
+
+        template <class _T>
+        iterator insert(const_iterator position, size_t n, const _T &val) {
+            assert(_type == ValueType::Array);
+            BasicJSON<_Traits, _Alloc> *ptr = position._ptr;
+#if (defined _DEBUG) || (defined DEBUG)
+            assert(_RangeCheck(ptr));
+#endif
+            iterator ret(ptr);
+            while (n-- > 0) {
+                ret = _DoInsert(ptr, val);
+                ptr = ret._ptr;
+            }
+            return ret;
+        }
+
+        template <class _InputIterator>
+        iterator insert(const_iterator position, _InputIterator first, _InputIterator last) {
+            assert(_type == ValueType::Array);
+            BasicJSON<_Traits, _Alloc> *ptr = position._ptr;
+#if (defined _DEBUG) || (defined DEBUG)
+            assert(_RangeCheck(ptr));
+#endif
+            iterator ret(ptr);
+            while (first != last) {
+                ret = _DoInsert(ptr, *first);
+                ptr = ret._ptr;
+                ++first;
+            }
+            return ret;
+        }
+
+        template <class _InputIterator>
+        void insert(_InputIterator first, _InputIterator last);
+
+        template <class _T>
+        iterator insert(const_iterator position, std::initializer_list<_T> il);
+
+        template <class _T>
+        void insert(std::initializer_list<_T> il);
+
+        iterator erase(const_iterator position) {
+            assert(_type == ValueType::Array);
+            BasicJSON<_Traits, _Alloc> *ptr = position._ptr;
+#if (defined _DEBUG) || (defined DEBUG)
+            assert(_RangeCheck(ptr));
+#endif
+            return _DoErase(ptr);
+        }
+
+        iterator erase(const_iterator first, const_iterator last) {
+            assert(_type == ValueType::Array);
+            BasicJSON<_Traits, _Alloc> *ptr = position._ptr;
+#if (defined _DEBUG) || (defined DEBUG)
+            assert(_RangeCheck(ptr));
+#endif
+            iterator ret(ptr);
+            while (first != last) {
+                ret = _DoErase(ptr);
+                ptr = ret._ptr;
+                first._ptr = ptr;
+            }
+            return ret;
+        }
+
+        template <class _Key>
+        iterator find(const _Key &key);
+
+        template <class _Key>
+        const_iterator find(const _Key &key) const;
+
         template <class, class> friend struct __cpp_basic_json_impl::AssignImpl;
         template <class, class> friend struct __cpp_basic_json_impl::AssignFromIntegerImpl;
         template <class, class> friend struct __cpp_basic_json_impl::AssignFromFloatImpl;
@@ -437,6 +520,42 @@ namespace jw {
     private:
         const char *ep = nullptr;
         //typename _Alloc::template rebind<BasicJSON<_Traits, _Alloc>>::other _allocator;
+
+		bool _RangeCheck(const BasicJSON<_Traits, _Alloc> *ptr) const {
+            if (_child != nullptr) {
+                if (ptr == _child) return true;
+                for (const BasicJSON<_Traits, _Alloc> *p = _child->_next; p != _child; p = p->_next) {
+                    if (ptr == p) return true;
+                }
+            }
+            return false;
+        }
+
+        template <class _T> iterator _DoInsert(BasicJSON<_Traits, _Alloc> *ptr, _T &&val) {
+            BasicJSON<_Traits, _Alloc> *item = New();
+            __cpp_basic_json_impl::AssignImpl<BasicJSON<_Traits, _Alloc>,
+                typename std::remove_cv<typename std::remove_reference<_T>::type>::type>::invoke(*item, std::forward<_T>(val));
+            if (_child->_next != _child && _child->_next->_type != item->_type) {
+                Delete(item);
+                throw std::logic_error("Cannot insert a difference value type to an Array");
+            }
+            item->_next = ptr;
+            item->_prev = ptr->_prev;
+            ptr->_prev->_next = item;
+            ++_child->_valueInt64;
+            return iterator(item);
+        }
+
+        iterator _DoErase(BasicJSON<_Traits, _Alloc> *ptr) {
+            iterator ret(ptr->_next);
+            ptr->_prev->_next = ptr->_next;
+            ptr->_next->_prev = ptr->_prev;
+            ptr->_prev = nullptr;
+            ptr->_next = nullptr;
+            Delete(ptr);
+            --_child->_valueInt64;
+            return ret;
+        }
 
         static inline BasicJSON<_Traits, _Alloc> *New() {
             typedef typename _Alloc::template rebind<BasicJSON<_Traits, _Alloc>>::other AllocatorType;
