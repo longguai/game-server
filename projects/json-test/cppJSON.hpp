@@ -66,9 +66,14 @@ namespace jw {
 
         template <class _JsonType, class _Integer> struct AssignFromIntegerImpl;
         template <class _JsonType, class _Float> struct AssignFromFloatImpl;
-        template <class _JsonType, class _String> struct AssignFromStringImpl;
-        template <class _JsonType, class _Array> struct AssignFromArrayImpl;
-        template <class _JsonType, class _Map> struct AssignFromMapImpl;
+        template <class _JsonType, class _String, bool _Moveable> struct AssignFromStringImpl;
+
+        template <class _JsonType, class Iterator>
+        void _AssignFromArrayHelper(_JsonType &c, Iterator first, Iterator last);
+
+        template <class _JsonType, class Iterator>
+        void _AssignFromMapHelper(_JsonType &c, Iterator first, Iterator last);
+
 
         template <class _JsonType, class _TargetType> struct AsImpl {
             typedef _TargetType TargetType;
@@ -462,9 +467,13 @@ namespace jw {
         template <class, class> friend struct __cpp_basic_json_impl::AssignImpl;
         template <class, class> friend struct __cpp_basic_json_impl::AssignFromIntegerImpl;
         template <class, class> friend struct __cpp_basic_json_impl::AssignFromFloatImpl;
-        template <class, class> friend struct __cpp_basic_json_impl::AssignFromStringImpl;
-        template <class, class> friend struct __cpp_basic_json_impl::AssignFromArrayImpl;
-        template <class, class> friend struct __cpp_basic_json_impl::AssignFromMapImpl;
+        template <class, class, bool> friend struct __cpp_basic_json_impl::AssignFromStringImpl;
+
+        template <class _JsonType, class Iterator>
+        friend void __cpp_basic_json_impl::_AssignFromArrayHelper(_JsonType &c, Iterator first, Iterator last);
+
+        template <class _JsonType, class Iterator>
+        friend void __cpp_basic_json_impl::_AssignFromMapHelper(_JsonType &c, Iterator first, Iterator last);
 
         template <class, class> friend struct __cpp_basic_json_impl::AsImpl;
         template <class, class> friend struct __cpp_basic_json_impl::AsIntegerImpl;
@@ -989,7 +998,7 @@ namespace jw {
             return str.c_str();
         }
 
-        template <class _JsonType, class _String> struct AssignFromStringImpl {
+        template <class _JsonType, class _String, bool _Moveable> struct AssignFromStringImpl {
             typedef _String SourceType;
             static inline void invoke(_JsonType &c, const SourceType &arg) {
                 c._valueType = _JsonType::ValueType::String;
@@ -997,66 +1006,58 @@ namespace jw {
             }
         };
 
+        template <class _JsonType, class _String> struct AssignFromStringImpl<_JsonType, _String, true> {
+            typedef _String SourceType;
+            static inline void invoke(_JsonType &c, const SourceType &arg) {
+                c._valueType = _JsonType::ValueType::String;
+                c._valueString = arg;
+            }
+            static inline void invoke(_JsonType &c, SourceType &&arg) {
+                c._valueType = _JsonType::ValueType::String;
+                c._valueString = std::move(arg);
+            }
+        };
+
         template <class _JsonType, size_t _N> struct AssignImpl<_JsonType, char [_N]>
-            : AssignFromStringImpl<_JsonType, char [_N]> { };
+            : AssignFromStringImpl<_JsonType, char [_N], false> { };
 
         template <class _JsonType> struct AssignImpl<_JsonType, char *>
-            : AssignFromStringImpl<_JsonType, char *> { };
+            : AssignFromStringImpl<_JsonType, char *, false> { };
 
         template <class _JsonType> struct AssignImpl<_JsonType, const char *>
-            : AssignFromStringImpl<_JsonType, const char *> { };
+            : AssignFromStringImpl<_JsonType, const char *, false> { };
 
         template <class _JsonType, class _Traits, class _Alloc>
         struct AssignImpl<_JsonType, std::basic_string<char, _Traits, _Alloc> >
-            : AssignFromStringImpl<_JsonType, std::basic_string<char, _Traits, _Alloc> > { };
+            : AssignFromStringImpl<_JsonType, std::basic_string<char, _Traits, _Alloc>,
+            std::is_same<std::basic_string<char, _Traits, _Alloc>, typename _JsonType::StringType>::value> { };
 
-        //template <class _JsonType>
-        //struct AssignImpl<_JsonType, typename _JsonType::StringType> {
-        //    typedef typename _JsonType::StringType SourceType;
-        //    static inline void invoke(_JsonType &c, const SourceType &arg) {
-        //        c._valueType = _JsonType::ValueType::String;
-        //        c._valueString = arg;
-        //    }
-        //    static inline void invoke(_JsonType &c, SourceType &&arg) {
-        //        c._valueType = _JsonType::ValueType::String;
-        //        c._valueString = std::move(arg);
-        //    }
-        //};
+        template <class _JsonType, class Iterator>
+        void _AssignFromArrayHelper(_JsonType &c, Iterator first, Iterator last) {
+            c._valueType = _JsonType::ValueType::Array;
+            c._child = _JsonType::New();
+            _JsonType *prev = c._child;
+            prev->_next = prev->_prev = prev;
+            for (; first != last; ++first) {
+                _JsonType *item = _JsonType::New();
+                AssignImpl<_JsonType, typename std::iterator_traits<Iterator>::value_type>::invoke(*item, *first);
+                prev->_next = item;
+                item->_prev = prev;
+                item->_next = c._child;
+                c._child->_prev = item;
+                ++c._child->_valueInt;
+                prev = item;
+            }
+        }
 
         template <class _JsonType, class _Elem, size_t _N>
         struct AssignImpl<_JsonType, _Elem [_N]> {
             typedef _Elem SourceType[_N];
             static void invoke(_JsonType &c, const SourceType &arg) {
-                c._valueType = _JsonType::ValueType::Array;
-                c._child = _JsonType::New();
-                _JsonType *prev = c._child;
-                prev->_next = prev->_prev = prev;
-                for (size_t i = 0; i < _N; ++i) {
-                    _JsonType *item = _JsonType::New();
-                    AssignImpl<_JsonType, _Elem>::invoke(*item, arg[i]);
-                    prev->_next = item;
-                    item->_prev = prev;
-                    item->_next = c._child;
-                    c._child->_prev = item;
-                    ++c._child->_valueInt;
-                    prev = item;
-                }
+                _AssignFromArrayHelper(c, std::begin(arg), std::end(arg));
             }
             static void invoke(_JsonType &c, SourceType &&arg) {
-                c._valueType = _JsonType::ValueType::Array;
-                c._child = _JsonType::New();
-                _JsonType *prev = c._child;
-                prev->_next = prev->_prev = prev;
-                for (size_t i = 0; i < _N; ++i) {
-                    _JsonType *item = _JsonType::New();
-                    AssignImpl<_JsonType, _Elem>::invoke(*item, std::move(arg[i]));
-                    prev->_next = item;
-                    item->_prev = prev;
-                    item->_next = c._child;
-                    c._child->_prev = item;
-                    ++c._child->_valueInt;
-                    prev = item;
-                }
+                _AssignFromArrayHelper(c, std::make_move_iterator(std::begin(arg)), std::make_move_iterator(std::end(arg)));
             }
         };
 
@@ -1064,36 +1065,10 @@ namespace jw {
         struct AssignFromArrayImpl {
             typedef _Array SourceType;
             static void invoke(_JsonType &c, const SourceType &arg) {
-                c._valueType = _JsonType::ValueType::Array;
-                c._child = _JsonType::New();
-                _JsonType *prev = c._child;
-                prev->_next = prev->_prev = prev;
-                for (typename SourceType::const_iterator it = arg.begin(); it != arg.end(); ++it) {
-                    _JsonType *item = _JsonType::New();
-                    AssignImpl<_JsonType, typename SourceType::value_type>::invoke(*item, *it);
-                    prev->_next = item;
-                    item->_prev = prev;
-                    item->_next = c._child;
-                    c._child->_prev = item;
-                    ++c._child->_valueInt;
-                    prev = item;
-                }
+                _AssignFromArrayHelper(c, arg.begin(), arg.end());
             }
             static void invoke(_JsonType &c, SourceType &&arg) {
-                c._valueType = _JsonType::ValueType::Array;
-                c._child = _JsonType::New();
-                _JsonType *prev = c._child;
-                prev->_next = prev->_prev = prev;
-                for (typename SourceType::iterator it = arg.begin(); it != arg.end(); ++it) {
-                    _JsonType *item = _JsonType::New();
-                    AssignImpl<_JsonType, typename SourceType::value_type>::invoke(*item, std::move(*it));
-                    prev->_next = item;
-                    item->_prev = prev;
-                    item->_next = c._child;
-                    c._child->_prev = item;
-                    ++c._child->_valueInt;
-                    prev = item;
-                }
+                _AssignFromArrayHelper(c, std::make_move_iterator(arg.begin()), std::make_move_iterator(arg.end()));
             }
         };
 
@@ -1121,45 +1096,36 @@ namespace jw {
         struct AssignImpl<_JsonType, std::unordered_multiset<_T, _Hash, _Pred, _Alloc> >
             : AssignFromArrayImpl<_JsonType, std::unordered_multiset<_T, _Hash, _Pred, _Alloc> > { };
 
+        template <class _JsonType, class Iterator>
+        void _AssignFromMapHelper(_JsonType &c, Iterator first, Iterator last) {
+            c._valueType = _JsonType::ValueType::Object;
+            c._child = _JsonType::New();
+            _JsonType *prev = c._child;
+            prev->_next = prev->_prev = prev;
+            for (; first != last; ++first) {
+                _JsonType *item = _JsonType::New();
+                item->_key = _ConvertString(first->first);
+                AssignImpl<_JsonType, typename std::iterator_traits<Iterator>::value_type::second_type>::invoke(*item, (*first).second);
+                prev->_next = item;
+                item->_prev = prev;
+                item->_next = c._child;
+                c._child->_prev = item;
+                ++c._child->_valueInt;
+                prev = item;
+            }
+        }
+
         template <class _JsonType, class _Map>
         struct AssignFromMapImpl {
             typedef _Map SourceType;
             static void invoke(_JsonType &c, const SourceType &arg) {
                 static_assert(std::is_convertible<const char *, typename SourceType::key_type>::value, "key_type must be able to convert to const char *");
-                c._valueType = _JsonType::ValueType::Object;
-                c._child = _JsonType::New();
-                _JsonType *prev = c._child;
-                prev->_next = prev->_prev = prev;
-                for (typename SourceType::const_iterator it = arg.begin(); it != arg.end(); ++it) {
-                    _JsonType *item = _JsonType::New();
-                    item->_key = _ConvertString(it->first);
-                    AssignImpl<_JsonType, typename SourceType::mapped_type>::invoke(*item, it->second);
-                    prev->_next = item;
-                    item->_prev = prev;
-                    item->_next = c._child;
-                    c._child->_prev = item;
-                    ++c._child->_valueInt;
-                    prev = item;
-                }
+                _AssignFromMapHelper(c, arg.begin(), arg.end());
             }
 
             static void invoke(_JsonType &c, SourceType &&arg) {
                 static_assert(std::is_convertible<const char *, typename SourceType::key_type>::value, "key_type must be able to convert to const char *");
-                c._valueType = _JsonType::ValueType::Object;
-                c._child = _JsonType::New();
-                _JsonType *prev = c._child;
-                prev->_next = prev->_prev = prev;
-                for (typename SourceType::iterator it = arg.begin(); it != arg.end(); ++it) {
-                    _JsonType *item = _JsonType::New();
-                    item->_key = _ConvertString(it->first);
-                    AssignImpl<_JsonType, typename SourceType::mapped_type>::invoke(*item, std::move(it->second));
-                    prev->_next = item;
-                    item->_prev = prev;
-                    item->_next = c._child;
-                    c._child->_prev = item;
-                    ++c._child->_valueInt;
-                    prev = item;
-                }
+                _AssignFromMapHelper(c, std::make_move_iterator(arg.begin()), std::make_move_iterator(arg.end()));
             }
         };
 
