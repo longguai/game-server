@@ -97,6 +97,7 @@ namespace jw {
         };
 
 		typedef BasicJSON<_Integer, _Float, _Traits, _Alloc> SelfType;
+        typedef SelfType value_type;  // 为了方便使用std::insert_iterator等等
         typedef _Integer IntegerType;
         typedef _Float FloatType;
 
@@ -173,6 +174,7 @@ namespace jw {
 
         // 带参构造
         BasicJSON<_Integer, _Float, _Traits, _Alloc>(ValueType valueType) {
+            reset();
             _valueType = valueType;
             if (_valueType == ValueType::Array || _valueType == ValueType::Object) {
                 _child = New();
@@ -504,19 +506,20 @@ namespace jw {
                 Delete(item);
                 throw std::logic_error("Cannot insert a difference value type to an Array");
             }
-            item->_next = ptr;
+            ptr->_prev->_next = item;  // 连接ptr的前驱和item
             item->_prev = ptr->_prev;
-            ptr->_prev->_next = item;
+            item->_next = ptr;  // 连接item和ptr的后继
+            ptr->_prev = item;
             ++_child->_valueInt;
             return iterator(item);
         }
 
         iterator _DoErase(SelfType *ptr) {
             iterator ret(ptr->_next);
-            ptr->_prev->_next = ptr->_next;
+            ptr->_prev->_next = ptr->_next;  // 将ptr从链表中解除
             ptr->_next->_prev = ptr->_prev;
             ptr->_prev = nullptr;
-            ptr->_next = nullptr;
+            ptr->_next = nullptr;  // 设置为nullptr防止将后继结点都释放了
             Delete(ptr);
             --_child->_valueInt;
             return ret;
