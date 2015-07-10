@@ -96,8 +96,14 @@ namespace jw {
             Null, False, True, Integer, Float, String, Array, Object
         };
 
-		typedef BasicJSON<_Integer, _Float, _Traits, _Alloc> SelfType;
-        typedef SelfType value_type;  // 为了方便使用std::insert_iterator等等
+        typedef BasicJSON<_Integer, _Float, _Traits, _Alloc> value_type;
+        typedef value_type *pointer;
+        typedef value_type &reference;
+        typedef const value_type *const_pointer;
+        typedef const value_type &const_reference;
+        typedef _Integer size_type;
+        typedef ptrdiff_t difference_type;
+
         typedef _Integer IntegerType;
         typedef _Float FloatType;
 
@@ -111,9 +117,9 @@ namespace jw {
         StringType _valueString;  // The item's string, if type==String
 
         StringType _key;  // The item's name string, if this item is the child of, or is in the list of subitems of an object.
-        SelfType *_child;  // An array or object item will have a child pointer pointing to a chain of the items in the array/object.
-        SelfType *_next;  // next/prev allow you to walk array/object chains.
-        SelfType *_prev;
+        pointer _child;  // An array or object item will have a child pointer pointing to a chain of the items in the array/object.
+        pointer _next;  // next/prev allow you to walk array/object chains.
+        pointer _prev;
 
         // 原本cJSON的实现是用的双向非循环键表，
         // 这里为了实现迭代器，增加一个头结点，用_child指向它，将头结点的_valueInt64用来表示链表结点数，
@@ -155,8 +161,8 @@ namespace jw {
 
         void clear() {
             if (_child != nullptr) {
-                for (SelfType *p = _child->_next; p != _child; ) {
-                    SelfType *q = p->_next;
+                for (pointer p = _child->_next; p != _child; ) {
+                    pointer q = p->_next;
                     Delete(p);
                     p = q;
                 }
@@ -268,23 +274,22 @@ namespace jw {
             return (_child->_next == _child);
         }
 
+        IntegerType size() const {
+            assert(_valueType == ValueType::Array || _valueType == ValueType::Object);
+            return (_child->_valueInt);
+        }
+
     public:
         // 迭代器相关
-        class iterator {
+        class iterator : public std::iterator<std::bidirectional_iterator_tag, value_type> {
             friend class BasicJSON<_Integer, _Float, _Traits, _Alloc>;
             friend class const_iterator;
+
             BasicJSON<_Integer, _Float, _Traits, _Alloc> *_ptr;
 
             iterator(BasicJSON<_Integer, _Float, _Traits, _Alloc> *ptr) throw() : _ptr(ptr) { }
 
         public:
-            typedef std::bidirectional_iterator_tag iterator_category;
-            typedef BasicJSON<_Integer, _Float, _Traits, _Alloc> value_type;
-            typedef ptrdiff_t difference_type;
-            typedef difference_type distance_type;
-            typedef value_type *pointer;
-            typedef value_type &reference;
-
             iterator() throw() : _ptr(nullptr) { }
             iterator(const iterator &other) throw() : _ptr(other._ptr) { }
 
@@ -324,23 +329,16 @@ namespace jw {
 
         typedef std::reverse_iterator<iterator> reverse_iterator;
 
-        class const_iterator {
+        class const_iterator : public std::iterator<std::bidirectional_iterator_tag, const value_type> {
             friend class BasicJSON<_Integer, _Float, _Traits, _Alloc>;
             BasicJSON<_Integer, _Float, _Traits, _Alloc> *_ptr;
 
             const_iterator(BasicJSON<_Integer, _Float, _Traits, _Alloc> *ptr) throw() : _ptr(ptr) { }
 
         public:
-            typedef std::bidirectional_iterator_tag iterator_category;
-            typedef const BasicJSON<_Integer, _Float, _Traits, _Alloc> value_type;
-            typedef ptrdiff_t difference_type;
-            typedef difference_type distance_type;
-            typedef value_type *pointer;
-            typedef value_type &reference;
-
             const_iterator() throw() : _ptr(nullptr) { }
             const_iterator(const const_iterator &other) throw() : _ptr(other._ptr) { }
-            const_iterator(const iterator &other) throw() : _ptr(other._ptr) { }
+            const_iterator(const typename value_type::iterator &other) throw() : _ptr(other._ptr) { }
 
             const_iterator &operator=(const const_iterator &other) throw() {
                 _ptr = other._ptr;
@@ -394,7 +392,7 @@ namespace jw {
 
         template <class _T> iterator insert(const_iterator position, _T &&val) {
             assert(_valueType == ValueType::Array);
-            SelfType *ptr = position._ptr;
+            pointer ptr = position._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
@@ -405,7 +403,7 @@ namespace jw {
 
         template <class _T> iterator insert(const_iterator position, size_t n, const _T &val) {
             assert(_valueType == ValueType::Array);
-            SelfType *ptr = position._ptr;
+            pointer ptr = position._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
@@ -419,7 +417,7 @@ namespace jw {
 
         template <class _InputIterator> iterator insert(const_iterator position, _InputIterator first, _InputIterator last) {
             assert(_valueType == ValueType::Array);
-            SelfType *ptr = position._ptr;
+            pointer ptr = position._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
@@ -440,7 +438,7 @@ namespace jw {
 
         iterator erase(const_iterator position) {
             assert(_valueType == ValueType::Array);
-            SelfType *ptr = position._ptr;
+            pointer ptr = position._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
@@ -449,7 +447,7 @@ namespace jw {
 
         iterator erase(const_iterator first, const_iterator last) {
             assert(_valueType == ValueType::Array);
-            SelfType *ptr = first._ptr;
+            pointer ptr = first._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
@@ -488,18 +486,18 @@ namespace jw {
         const char *ep = nullptr;
         //typename _Alloc::template rebind<BasicJSON<_Integer, _Float, _Traits, _Alloc> >::other _allocator;
 
-		bool _RangeCheck(const SelfType *ptr) const {
+		bool _RangeCheck(const_pointer ptr) const {
             if (_child != nullptr) {
                 if (ptr == _child) return true;
-                for (const SelfType *p = _child->_next; p != _child; p = p->_next) {
+                for (const_pointer p = _child->_next; p != _child; p = p->_next) {
                     if (ptr == p) return true;
                 }
             }
             return false;
         }
 
-        template <class _T> iterator _DoInsert(SelfType *ptr, _T &&val) {
-            SelfType *item = New();
+        template <class _T> iterator _DoInsert(pointer ptr, _T &&val) {
+            pointer item = New();
             __cpp_basic_json_impl::AssignImpl<BasicJSON<_Integer, _Float, _Traits, _Alloc>,
                 typename std::remove_cv<typename std::remove_reference<_T>::type>::type>::invoke(*item, std::forward<_T>(val));
             if (_child->_next != _child && _child->_next->_valueType != item->_valueType) {
@@ -514,7 +512,7 @@ namespace jw {
             return iterator(item);
         }
 
-        iterator _DoErase(SelfType *ptr) {
+        iterator _DoErase(pointer ptr) {
             iterator ret(ptr->_next);
             ptr->_prev->_next = ptr->_next;  // 将ptr从链表中解除
             ptr->_next->_prev = ptr->_prev;
@@ -525,15 +523,15 @@ namespace jw {
             return ret;
         }
 
-        static inline SelfType *New() {
+        static inline pointer New() {
             typedef typename _Alloc::template rebind<BasicJSON<_Integer, _Float, _Traits, _Alloc> >::other AllocatorType;
             AllocatorType allocator;
             typename AllocatorType::pointer p = allocator.allocate(sizeof(BasicJSON<_Integer, _Float, _Traits, _Alloc>));
             allocator.construct(p);
-            return (SelfType *)p;
+            return (pointer)p;
         }
 
-        static inline void Delete(SelfType *c) {
+        static inline void Delete(pointer c) {
             typedef typename _Alloc::template rebind<BasicJSON<_Integer, _Float, _Traits, _Alloc> >::other AllocatorType;
             AllocatorType allocator;
             allocator.destroy(c);
@@ -667,7 +665,7 @@ namespace jw {
         }
 
         const char *parse_array(const char *value) {
-            SelfType *child;
+            pointer child;
             if (*value != '[')  { ep = value; return nullptr; } // not an array!
 
             value = skip(value + 1);
@@ -685,7 +683,7 @@ namespace jw {
             ++this->_child->_valueInt;
 
             while (*value == ',') {
-                SelfType *new_item = New();
+                pointer new_item = New();
                 if (new_item == nullptr) return nullptr;     // memory fail
                 child->_next = new_item; new_item->_prev = child; child = new_item;
                 value = skip(child->parse_value(skip(value + 1)));
@@ -707,7 +705,7 @@ namespace jw {
             if (*value == '}') return value + 1;    // empty array.
 
             _valueType = ValueType::Object;
-            SelfType *child;
+            pointer child;
             this->_child = New();
             if (this->_child == nullptr) return nullptr;        // memory fail
             this->_child->_next = child = New();
@@ -724,7 +722,7 @@ namespace jw {
             ++this->_child->_valueInt;
 
             while (*value == ',') {
-                SelfType *new_item = New();
+                pointer new_item = New();
                 if (new_item == nullptr)   return nullptr; // memory fail
                 child->_next = new_item; new_item->_prev = child; child = new_item;
                 value = skip(child->parse_string(skip(value + 1)));
@@ -814,7 +812,7 @@ namespace jw {
             }
 
             // Retrieve all the results:
-            SelfType *child = _child;
+            pointer child = _child;
             size_t i = 0;
             ret.append("[");
             for (child = _child->_next; child != _child; child = child->_next, ++i) {
@@ -836,7 +834,7 @@ namespace jw {
             }
 
             // Compose the output:
-            SelfType *child = _child->_next;
+            pointer child = _child->_next;
             ++depth;
             ret.append(1, '{'); if (fmt) ret.append(1, '\n');
             for (size_t i = 0; i < numentries; ++i) {
@@ -852,10 +850,10 @@ namespace jw {
             ret.append(1, '}');
         }
 
-        static bool Duplicate(SelfType &newitem, const SelfType &item, bool recurse) {
+        static bool Duplicate(reference newitem, const_reference item, bool recurse) {
             newitem.clear();
-            const SelfType *cptr;
-            SelfType *nptr = nullptr, *newchild;
+            const_pointer cptr;
+            pointer nptr = nullptr, newchild;
             // Copy over all vars
             newitem._valueType = item._valueType, newitem._valueInt = item._valueInt, newitem._valueFloat = item._valueFloat;
             newitem._valueString = item._valueString;
