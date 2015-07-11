@@ -59,6 +59,17 @@ namespace jw {
 
     namespace __cpp_basic_json_impl {
 
+        // _FixString
+        static inline const char *_FixString(char *const str) { return str; }
+        static inline const char *_FixString(const char *const str) { return str; }
+        template <size_t _N> const char *_FixString(char (&str)[_N]) { return str; }
+        template <size_t _N> const char *_FixString(const char (&str)[_N]) { return str; }
+        template <class _Traits, class _Alloc>
+        static inline const char *_FixString(const std::basic_string<char, _Traits, _Alloc> &str) {
+            return str.c_str();
+        }
+
+        // AssignImpl
         template <class _JsonType, class _SourceType> struct AssignImpl {
             typedef _SourceType SourceType;
             static void invoke(_JsonType &c, SourceType arg);
@@ -74,7 +85,7 @@ namespace jw {
         template <class _JsonType, class Iterator>
         void _AssignFromMapHelper(_JsonType &c, Iterator first, Iterator last);
 
-
+        // AsImpl
         template <class _JsonType, class _TargetType> struct AsImpl {
             typedef _TargetType TargetType;
             static TargetType invoke(const _JsonType &c);
@@ -399,7 +410,9 @@ namespace jw {
             return _DoInsertForArray(ptr, std::forward<_T>(val));
         }
 
-        template <class _Key, class _Val> std::pair<iterator, bool> insert(std::pair<_Key, _Val> &&val);
+        template <class _T> inline std::pair<iterator, bool> insert(_T &&val) {
+            return _DoInsertForMap(val);
+        }
 
         template <class _T> iterator insert(const_iterator position, size_t n, const _T &val) {
             assert(_valueType == ValueType::Array);
@@ -427,7 +440,11 @@ namespace jw {
             return iterator(ptr);
         }
 
-        template <class _InputIterator> void insert(_InputIterator first, _InputIterator last);
+        template <class _InputIterator> void insert(_InputIterator first, _InputIterator last) {
+            for (; first != last; ++first) {
+                _DoInsertForMap(*first);
+            }
+        }
 
         template <class _T> iterator insert(const_iterator position, std::initializer_list<_T> il) {
             assert(_valueType == ValueType::Array);
@@ -442,7 +459,11 @@ namespace jw {
             return iterator(ptr);
         }
 
-        template <class _T> void insert(std::initializer_list<_T> il);
+        template <class _T> void insert(std::initializer_list<_T> il) {
+            for (typename std::initializer_list<_T>::iterator it = il.begin(); it != il.end(); ++it) {
+                _DoInsertForMap(*it);
+            }
+        }
 
         iterator erase(const_iterator position) {
             assert(_valueType == ValueType::Array);
@@ -468,9 +489,15 @@ namespace jw {
             return ret;
         }
 
-        template <class _Key> iterator find(const _Key &key);
+        template <class _String> iterator find(const _String &key) {
+            pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
+            return ptr != nullptr ? iterator(ptr) : end();
+        }
 
-        template <class _Key> const_iterator find(const _Key &key) const;
+        template <class _String> const_iterator find(const _String &key) const {
+            pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
+            return ptr != nullptr ? const_iterator(ptr) : end();
+        }
 
         template <class, class> friend struct __cpp_basic_json_impl::AssignImpl;
         template <class, class> friend struct __cpp_basic_json_impl::AssignFromIntegerImpl;
@@ -524,6 +551,26 @@ namespace jw {
             return iterator(item);
         }
 
+        template <class _T> std::pair<iterator, bool> _DoInsertForMap(_T &&val) {
+            typedef typename std::remove_cv<typename std::remove_reference<_T>::type>::type _PairType;
+            static_assert(std::is_convertible<const char *, typename _PairType::first_type>::value, "key_type must be able to convert to const char *");
+            pointer item = New();
+            __cpp_basic_json_impl::AssignImpl<BasicJSON<_Integer, _Float, _Traits, _Alloc>,
+                typename _PairType::second_type>::invoke(*item, val.second);
+            if (item->_prev != nullptr || item->_next != nullptr || !item->_key.empty()) {
+                Delete(item);
+                throw std::logic_error("Item already added. It can't be added again");
+            }
+            item->_key = __cpp_basic_json_impl::_FixString(val.first);
+            pointer ptr = _child;  // 直接插入到末尾
+            ptr->_prev->_next = item;  // 连接ptr的前驱和item
+            item->_prev = ptr->_prev;
+            item->_next = ptr;  // 连接item和ptr的后继
+            ptr->_prev = item;
+            ++_child->_valueInt;
+            return std::make_pair(iterator(item), true);
+        }
+
         iterator _DoErase(pointer ptr) {
             iterator ret(ptr->_next);
             ptr->_prev->_next = ptr->_next;  // 将ptr从链表中解除
@@ -533,6 +580,17 @@ namespace jw {
             Delete(ptr);
             --_child->_valueInt;
             return ret;
+        }
+
+        pointer _DoFind(const char *key) const {
+            assert(_valueType == ValueType::Object);
+            if (key == nullptr || *key == '\0') return nullptr;
+            for (const_iterator it = begin(); it != end(); ++it) {
+                if (it._ptr->_key.compare(key) == 0) {
+                    return it._ptr;
+                }
+            }
+            return nullptr;
         }
 
         static inline pointer New() {
@@ -1012,20 +1070,11 @@ namespace jw {
         template <class _JsonType> struct AssignImpl<_JsonType, double>
             : AssignFromFloatImpl<_JsonType, double> { };
 
-        static inline const char *_ConvertString(const char *str) {
-            return str;
-        }
-
-        template <class _Traits, class _Alloc>
-        static inline const char *_ConvertString(const std::basic_string<char, _Traits, _Alloc> &str) {
-            return str.c_str();
-        }
-
         template <class _JsonType, class _String, bool _Moveable> struct AssignFromStringImpl {
             typedef _String SourceType;
             static inline void invoke(_JsonType &c, const SourceType &arg) {
                 c._valueType = _JsonType::ValueType::String;
-                c._valueString = _ConvertString(arg);
+                c._valueString = _FixString(arg);
             }
         };
 
@@ -1127,7 +1176,7 @@ namespace jw {
             prev->_next = prev->_prev = prev;
             for (; first != last; ++first) {
                 _JsonType *item = _JsonType::New();
-                item->_key = _ConvertString((*first).first);
+                item->_key = _FixString((*first).first);
                 AssignImpl<_JsonType, typename std::iterator_traits<Iterator>::value_type::second_type>::invoke(*item, (*first).second);
                 prev->_next = item;
                 item->_prev = prev;
@@ -1363,6 +1412,7 @@ namespace jw {
         template <class _JsonType, class _Map> struct AsMapImpl {
             typedef _Map TargetType;
             static TargetType invoke(const _JsonType &c) {
+                static_assert(std::is_convertible<const char *, typename TargetType::key_type>::value, "key_type must be able to convert to const char *");
                 switch (c._valueType) {
                 case _JsonType::ValueType::Null: return TargetType();
                 case _JsonType::ValueType::False: throw std::logic_error("Cannot convert JSON_False to Object"); break;
