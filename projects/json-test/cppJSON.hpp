@@ -23,6 +23,7 @@
 #ifndef __cppJSON__h__
 #define __cppJSON__h__
 
+#include <stddef.h>  // for ptrdiff_t
 #include <stdint.h>  // for int64_t
 #include <string>
 
@@ -34,7 +35,7 @@
 #define snprintf sprintf_s
 #endif
 
-#include <stdlib.h>
+#include <stdlib.h>  // for atoll
 #include <stdexcept>
 #include <type_traits>
 
