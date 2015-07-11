@@ -4,7 +4,6 @@
 #endif
 
 #include "cppJSON.hpp"
-//#include "JsonValue.h"
 
 #include <iostream>
 
@@ -206,8 +205,6 @@ template <class _T, class _Other>
 inline bool operator!=(const TestAllocator<_T> &left, const TestAllocator<_Other> &right) throw() {
     return !(left == right);
 }
-
-//#include "cJSON.h"
 
 #include <algorithm>
 #include <functional>
