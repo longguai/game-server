@@ -23,11 +23,6 @@
 #ifndef __cppJSON__h__
 #define __cppJSON__h__
 
-#ifdef _MSC_VER
-#   pragma warning(push)
-#   pragma warning(disable: 4996)
-#endif
-
 #include <stdint.h>  // for int64_t
 #include <string>
 
@@ -35,6 +30,9 @@
 #include <inttypes.h>  // for PRId64
 #include <string.h>  // for strncmp
 #include <stdio.h>
+#ifdef _MSC_VER
+#define snprintf sprintf_s
+#endif
 
 #include <stdlib.h>
 #include <stdexcept>
@@ -489,12 +487,12 @@ namespace jw {
             return ret;
         }
 
-        template <class _String> iterator find(const _String &key) {
+        template <class _String> inline iterator find(const _String &key) {
             pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
             return ptr != nullptr ? iterator(ptr) : end();
         }
 
-        template <class _String> const_iterator find(const _String &key) const {
+        template <class _String> inline const_iterator find(const _String &key) const {
             pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
             return ptr != nullptr ? const_iterator(ptr) : end();
         }
@@ -827,16 +825,16 @@ namespace jw {
 
         template <class _String> void print_integer(_String &ret) const {
             char str[21];  // 2^64+1 can be represented in 21 chars.
-            sprintf(str, "%" PRId64, (int64_t)_valueInt);
+            snprintf(str, 21, "%" PRId64, (int64_t)_valueInt);
             ret.append(str);
         }
 
         template <class _String> void print_float(_String &ret) const {
             char str[64];  // This is a nice tradeoff.
             double d = static_cast<double>(_valueFloat);
-            if (fabs(floor(d) - d) <= std::numeric_limits<double>::epsilon() && fabs(d) < 1.0e60) sprintf(str, "%.0f", d);
-            else if (fabs(d) < 1.0e-6 || fabs(d) > 1.0e9)           sprintf(str, "%e", d);
-            else                                                sprintf(str, "%f", d);
+            if (fabs(floor(d) - d) <= std::numeric_limits<double>::epsilon() && fabs(d) < 1.0e60) snprintf(str, 64, "%.0f", d);
+            else if (fabs(d) < 1.0e-6 || fabs(d) > 1.0e9) snprintf(str, 64, "%e", d);
+            else snprintf(str, 64, "%f", d);
             ret.append(str);
         }
 
@@ -861,7 +859,7 @@ namespace jw {
                     case '\n':  ret.append(1, 'n'); break;
                     case '\r':  ret.append(1, 'r'); break;
                     case '\t':  ret.append(1, 't'); break;
-                    default: { char ptr2[8]; sprintf(ptr2, "u%04x", token); ret.append(ptr2); } break;  // escape and print
+                    default: { char ptr2[8]; snprintf(ptr2, 8, "u%04x", token); ret.append(ptr2); } break;  // escape and print
                     }
                 }
             }
@@ -1343,7 +1341,7 @@ namespace jw {
                 case _JsonType::ValueType::True: return TargetType("true");
                 case _JsonType::ValueType::Integer: {
                     char str[21];  // 2^64+1 can be represented in 21 chars.
-                    sprintf(str, "%" PRId64, (int64_t)c._valueInt);
+                    snprintf(str, 21, "%" PRId64, (int64_t)c._valueInt);
                     return TargetType(str);
                 }
                 case _JsonType::ValueType::Float: {
@@ -1455,9 +1453,5 @@ namespace jw {
 
     typedef BasicJSON<int64_t, double, std::char_traits<char>, std::allocator<char> > cppJSON;
 }
-
-#ifdef _MSC_VER
-#   pragma warning(pop)
-#endif
 
 #endif
