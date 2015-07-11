@@ -435,6 +435,7 @@ int main(int argc, char *argv[])
         if (it != js.end()) {
             std::cout << it->as<double>() << std::endl;
         }
+        std::cout << js.findAs<int>("def") << std::endl;
     }
     //new int;
     //malloc(sizeof(int));

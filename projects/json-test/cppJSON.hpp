@@ -497,6 +497,17 @@ namespace jw {
             return ptr != nullptr ? const_iterator(ptr) : end();
         }
 
+        template <class _T, class _String> inline _T findAs(const _String &key) const {
+            const char *str = __cpp_basic_json_impl::_FixString(key);
+            pointer ptr = _DoFind(str);
+            if (ptr == nullptr) {
+                char str[128];
+                snprintf(str, 128, "Cannot find value for key = %s", str);
+                throw std::logic_error(str);
+            }
+            return ptr->as<_T>();
+        }
+
         template <class, class> friend struct __cpp_basic_json_impl::AssignImpl;
         template <class, class> friend struct __cpp_basic_json_impl::AssignFromIntegerImpl;
         template <class, class> friend struct __cpp_basic_json_impl::AssignFromFloatImpl;
