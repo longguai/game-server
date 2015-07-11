@@ -411,9 +411,31 @@ int main(int argc, char *argv[])
         std::transform(std::begin(arr), std::end(arr), std::inserter(js, js.begin()), [](int a) {
             return cppJSON(a);
         });
+        js.insert(js.begin(), { 10, 11, 12, 13, 14 });
         std::cout << js << std::endl;
+
+        std::vector<int> vec(std::begin(arr), std::end(arr));
+        vec.insert(vec.begin(), { 10, 11, 12, 13, 14 });
+        std::copy(vec.begin(), vec.end(), std::ostream_iterator<int>(std::cout, " "));
+        std::cout << std::endl;
     }
 
+    {
+        cppJSON js(cppJSON::ValueType::Object);
+        int val[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        std::string key[] = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j" };
+        for (int i = 0; i < 10; ++i) {
+            js.insert(std::make_pair(key[i], val[i]));
+        }
+        std::cout << js << std::endl;
+        js.insert({std::make_pair(std::string("abc"), 123), std::make_pair(std::string("def"), 456)});
+        std::cout << js << std::endl;
+
+        auto it = js.find("abc");
+        if (it != js.end()) {
+            std::cout << it->as<double>() << std::endl;
+        }
+    }
     //new int;
     //malloc(sizeof(int));
     //TestAllocator<int>().allocate(10);
