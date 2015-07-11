@@ -396,7 +396,7 @@ namespace jw {
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
-            return _DoInsert(ptr, std::forward<_T>(val));
+            return _DoInsertForArray(ptr, std::forward<_T>(val));
         }
 
         template <class _Key, class _Val> std::pair<iterator, bool> insert(std::pair<_Key, _Val> &&val);
@@ -407,12 +407,11 @@ namespace jw {
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
-            iterator ret(ptr);
             while (n-- > 0) {
-                ret = _DoInsert(ptr, val);
-                ptr = ret._ptr;
+                iterator ret = _DoInsertForArray(ptr, val);
+                ptr = ret._ptr->_next;
             }
-            return ret;
+            return iterator(ptr);
         }
 
         template <class _InputIterator> iterator insert(const_iterator position, _InputIterator first, _InputIterator last) {
@@ -421,18 +420,27 @@ namespace jw {
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
-            iterator ret(ptr);
-            while (first != last) {
-                ret = _DoInsert(ptr, *first);
-                ptr = ret._ptr;
-                ++first;
+            for (; first != last;  ++first) {
+                iterator ret = _DoInsertForArray(ptr, *first);
+                ptr = ret._ptr->_next;
             }
-            return ret;
+            return iterator(ptr);
         }
 
         template <class _InputIterator> void insert(_InputIterator first, _InputIterator last);
 
-        template <class _T> iterator insert(const_iterator position, std::initializer_list<_T> il);
+        template <class _T> iterator insert(const_iterator position, std::initializer_list<_T> il) {
+            assert(_valueType == ValueType::Array);
+            pointer ptr = position._ptr;
+#if (defined _DEBUG) || (defined DEBUG)
+            assert(_RangeCheck(ptr));
+#endif
+            for (typename std::initializer_list<_T>::iterator it = il.begin(); it != il.end(); ++it) {
+                iterator ret = _DoInsertForArray(ptr, *it);
+                ptr = ret._ptr->_next;
+            }
+            return iterator(ptr);
+        }
 
         template <class _T> void insert(std::initializer_list<_T> il);
 
@@ -496,13 +504,17 @@ namespace jw {
             return false;
         }
 
-        template <class _T> iterator _DoInsert(pointer ptr, _T &&val) {
+        template <class _T> iterator _DoInsertForArray(pointer ptr, _T &&val) {
             pointer item = New();
             __cpp_basic_json_impl::AssignImpl<BasicJSON<_Integer, _Float, _Traits, _Alloc>,
                 typename std::remove_cv<typename std::remove_reference<_T>::type>::type>::invoke(*item, std::forward<_T>(val));
             if (_child->_next != _child && _child->_next->_valueType != item->_valueType) {
                 Delete(item);
                 throw std::logic_error("Cannot insert a difference value type to an Array");
+            }
+            if (item->_prev != nullptr || item->_next != nullptr) {
+                Delete(item);
+                throw std::logic_error("Item already added. It can't be added again");
             }
             ptr->_prev->_next = item;  // 连接ptr的前驱和item
             item->_prev = ptr->_prev;
@@ -1115,7 +1127,7 @@ namespace jw {
             prev->_next = prev->_prev = prev;
             for (; first != last; ++first) {
                 _JsonType *item = _JsonType::New();
-                item->_key = _ConvertString(first->first);
+                item->_key = _ConvertString((*first).first);
                 AssignImpl<_JsonType, typename std::iterator_traits<Iterator>::value_type::second_type>::invoke(*item, (*first).second);
                 prev->_next = item;
                 item->_prev = prev;
