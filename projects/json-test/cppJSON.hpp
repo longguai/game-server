@@ -400,9 +400,9 @@ namespace jw {
         const_reverse_iterator rend() const { return const_reverse_iterator(_child->_next); }
         const_reverse_iterator crend() const { return const_reverse_iterator(_child->_next); }
 
-        template <class _T> iterator insert(const_iterator position, _T &&val) {
+        template <class _T> iterator insert(const_iterator where, _T &&val) {
             assert(_valueType == ValueType::Array);
-            pointer ptr = position._ptr;
+            pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
@@ -413,9 +413,9 @@ namespace jw {
             return _DoInsertForMap(val);
         }
 
-        template <class _T> iterator insert(const_iterator position, size_t n, const _T &val) {
+        template <class _T> iterator insert(const_iterator where, size_t n, const _T &val) {
             assert(_valueType == ValueType::Array);
-            pointer ptr = position._ptr;
+            pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
@@ -426,9 +426,9 @@ namespace jw {
             return iterator(ptr);
         }
 
-        template <class _InputIterator> iterator insert(const_iterator position, _InputIterator first, _InputIterator last) {
+        template <class _InputIterator> iterator insert(const_iterator where, _InputIterator first, _InputIterator last) {
             assert(_valueType == ValueType::Array);
-            pointer ptr = position._ptr;
+            pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
@@ -445,9 +445,9 @@ namespace jw {
             }
         }
 
-        template <class _T> iterator insert(const_iterator position, std::initializer_list<_T> il) {
+        template <class _T> iterator insert(const_iterator where, std::initializer_list<_T> il) {
             assert(_valueType == ValueType::Array);
-            pointer ptr = position._ptr;
+            pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
@@ -464,17 +464,17 @@ namespace jw {
             }
         }
 
-        iterator erase(const_iterator position) {
+        iterator erase(const_iterator where) {
             assert(_valueType == ValueType::Array || _valueType == ValueType::Object);
-            pointer ptr = position._ptr;
+            pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
 #endif
             return _DoErase(ptr);
         }
 
-        iterator inline erase(iterator position) {
-            return erase(const_iterator(position._ptr));
+        iterator inline erase(iterator where) {
+            return erase(const_iterator(where._ptr));
         }
 
         template <class _String> inline IntegerType erase(const _String &key) {
