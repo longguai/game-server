@@ -355,8 +355,8 @@ namespace jw {
                 return *this;
             }
 
-            inline reference &operator*() const throw() { return *_ptr; }
-            inline pointer *operator->() const throw() { return _ptr; }
+            inline reference operator*() const throw() { return *_ptr; }
+            inline pointer operator->() const throw() { return _ptr; }
 
             inline const_iterator &operator++() throw() {
                 _ptr = _ptr->_next;
@@ -465,7 +465,7 @@ namespace jw {
         }
 
         iterator erase(const_iterator position) {
-            assert(_valueType == ValueType::Array);
+            assert(_valueType == ValueType::Array || _valueType == ValueType::Object);
             pointer ptr = position._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
@@ -473,8 +473,22 @@ namespace jw {
             return _DoErase(ptr);
         }
 
+        iterator inline erase(iterator position) {
+            return erase(const_iterator(position._ptr));
+        }
+
+        template <class _String> inline IntegerType erase(const _String &key) {
+            assert(_valueType == ValueType::Object);
+            pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
+            if (ptr != nullptr) {
+                _DoErase(ptr);
+                return 1;
+            }
+            return 0;
+        }
+
         iterator erase(const_iterator first, const_iterator last) {
-            assert(_valueType == ValueType::Array);
+            assert(_valueType == ValueType::Array || _valueType == ValueType::Object);
             pointer ptr = first._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
@@ -489,16 +503,19 @@ namespace jw {
         }
 
         template <class _String> inline iterator find(const _String &key) {
+            assert(_valueType == ValueType::Object);
             pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
             return ptr != nullptr ? iterator(ptr) : end();
         }
 
         template <class _String> inline const_iterator find(const _String &key) const {
+            assert(_valueType == ValueType::Object);
             pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
             return ptr != nullptr ? const_iterator(ptr) : end();
         }
 
         template <class _T, class _String> inline _T findAs(const _String &key) const {
+            assert(_valueType == ValueType::Object);
             const char *str = __cpp_basic_json_impl::_FixString(key);
             pointer ptr = _DoFind(str);
             if (ptr == nullptr) {
@@ -596,7 +613,7 @@ namespace jw {
             assert(_valueType == ValueType::Object);
             if (key == nullptr || *key == '\0') return nullptr;
             for (const_iterator it = begin(); it != end(); ++it) {
-                if (it._ptr->_key.compare(key) == 0) {
+                if (it->_key.compare(key) == 0) {
                     return it._ptr;
                 }
             }
