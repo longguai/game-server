@@ -82,9 +82,9 @@ namespace echo {
 
 namespace chat {
 
-    class Session {
+    class Session : public std::enable_shared_from_this<Session> {
     public:
-        Session(asio::ip::tcp::socket &&socket, std::function<void (Session *, const char *, size_t)> &&callback)
+        Session(asio::ip::tcp::socket &&socket, std::function<void (const std::shared_ptr<Session> &, const char *, size_t)> &&callback)
             : _socket(std::move(socket))
             , _callback(callback) {
         }
@@ -107,12 +107,13 @@ namespace chat {
 
     private:
         void _doRead() {
-            _socket.async_read_some(asio::buffer(_readData, max_length), [this](std::error_code ec, size_t length) {
+            auto thiz = shared_from_this();
+            _socket.async_read_some(asio::buffer(_readData, max_length), [this, thiz](std::error_code ec, size_t length) {
                 if (!ec) {
-                    _callback(this, _readData, length);
+                    _callback(thiz, _readData, length);
                     _doRead();
                 } else {
-                    _callback(this, nullptr, 0);
+                    _callback(thiz, nullptr, 0);
                 }
             });
         }
@@ -124,7 +125,7 @@ namespace chat {
                     asio::async_write(_socket, _writeQueue.front(), std::bind(&Session::_doWrite, this, std::placeholders::_1, std::placeholders::_2));
                 }
             } else {
-                _callback(this, nullptr, 0);
+                _callback(shared_from_this(), nullptr, 0);
             }
         }
 
@@ -134,7 +135,7 @@ namespace chat {
 
         std::deque<asio::const_buffers_1> _writeQueue;
 
-        std::function<void (Session *, const char *, size_t)> _callback;
+        std::function<void (const std::shared_ptr<Session> &, const char *, size_t)> _callback;
     };
 
     class Server {
@@ -159,28 +160,28 @@ namespace chat {
 
         void _acceptCallback(size_t index, std::error_code ec) {
             if (!ec) {
-                Session *s = new (std::nothrow) Session(std::move(*_socket[index]), [this](Session *s, const char *data, size_t length) {
-                    if (data != nullptr) {
-                        _mutex.lock();
-                        std::for_each(_sessions.begin(), _sessions.end(), [data, length](Session *s) {
-                            s->deliver(data, length);
-                        });
-                        _mutex.unlock();
-                    } else {
-                        _mutex.lock();
-                        _sessions.erase(s);
-                        _mutex.unlock();
-                        delete s;
-                    }
-                });
-                if (s != nullptr) {
-                    _mutex.lock();
-                    _sessions.insert(s);
-                    _mutex.unlock();
-                    s->start();
-                }
+                std::shared_ptr<Session> s = std::make_shared<Session>(std::move(*_socket[index]),
+                    std::bind(&Server::_sessionCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+                _mutex.lock();
+                _sessions.insert(s);
+                _mutex.unlock();
+                s->start();
             }
             _acceptor.async_accept(*_socket[index], std::bind(&Server::_acceptCallback, this, index, std::placeholders::_1));
+        }
+
+        void _sessionCallback(const std::shared_ptr<Session> &s, const char *data, size_t length) {
+            if (data != nullptr) {
+                _mutex.lock();
+                std::for_each(_sessions.begin(), _sessions.end(), [data, length](const std::shared_ptr<Session> &s) {
+                    s->deliver(data, length);
+                });
+                _mutex.unlock();
+            } else {
+                _mutex.lock();
+                _sessions.erase(s);
+                _mutex.unlock();
+            }
         }
 
         asio::ip::tcp::acceptor _acceptor;
@@ -188,7 +189,7 @@ namespace chat {
         enum { max_accept = 128 };
         std::shared_ptr<asio::ip::tcp::socket> _socket[max_accept];
 
-        std::unordered_set<Session *> _sessions;
+        std::unordered_set<std::shared_ptr<Session> > _sessions;
         std::mutex _mutex;
     };
 
