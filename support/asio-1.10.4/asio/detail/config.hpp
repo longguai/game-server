@@ -219,7 +219,7 @@
 #  endif // ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) || (__GNUC__ > 4)
 # endif // defined(__GNUC__)
 # if !defined(ASIO_ERROR_CATEGORY_NOEXCEPT)
-#  define ASIO_ERROR_CATEGORY_NOEXCEPT
+#  define ASIO_ERROR_CATEGORY_NOEXCEPT throw()
 # endif // !defined(ASIO_ERROR_CATEGORY_NOEXCEPT)
 #endif // !defined(ASIO_ERROR_CATEGORY_NOEXCEPT)
 
