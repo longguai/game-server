@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asio-test", "..\..\..\projects\asio-test\asio-test.vcxproj", "{2BB39326-DF77-40CD-B70A-712886318A16}"
 EndProject
@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tcc-test", "..\..\..\projec
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "json-test", "..\..\..\projects\json-test\json-test.vcxproj", "{0D0D5B6D-7092-458D-85A0-7B63CA5EF339}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common-test", "..\..\..\projects\common-test\common-test.vcxproj", "{D09FC85A-336A-4BAA-84DA-A462DD897022}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,6 +50,10 @@ Global
 		{0D0D5B6D-7092-458D-85A0-7B63CA5EF339}.Debug|Win32.Build.0 = Debug|Win32
 		{0D0D5B6D-7092-458D-85A0-7B63CA5EF339}.Release|Win32.ActiveCfg = Release|Win32
 		{0D0D5B6D-7092-458D-85A0-7B63CA5EF339}.Release|Win32.Build.0 = Release|Win32
+		{D09FC85A-336A-4BAA-84DA-A462DD897022}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D09FC85A-336A-4BAA-84DA-A462DD897022}.Debug|Win32.Build.0 = Debug|Win32
+		{D09FC85A-336A-4BAA-84DA-A462DD897022}.Release|Win32.ActiveCfg = Release|Win32
+		{D09FC85A-336A-4BAA-84DA-A462DD897022}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

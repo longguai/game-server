@@ -3,19 +3,13 @@
 #include <crtdbg.h>
 #include <stdio.h>
 #include <time.h>
-#include <mutex>
+#include "QuickMutex.h"
 
 namespace jw {
-    struct _Lock {
-        _Lock() { ::InitializeCriticalSection(&_cs); }
-        ~_Lock() { ::DeleteCriticalSection(&_cs); }
-        void lock() { ::EnterCriticalSection(&_cs); }
-        void unlock() { ::LeaveCriticalSection(&_cs); }
-        ::CRITICAL_SECTION _cs;
-    } g_lock;
+    QuickMutex g_lock;
 
     static inline void _LogWithTag(const char *tag, WORD attributes, const char *format, va_list args) {
-        std::lock_guard<_Lock> g(g_lock);
+        std::lock_guard<QuickMutex> g(g_lock);
         (void)g;
 
         char buf[1024];
@@ -24,11 +18,11 @@ namespace jw {
         errno_t err = localtime_s(&t, &now);
         size_t offset = 0;
         if (err == 0) {
-            offset = strftime(buf, 1024, "%Y-%m-%d %H:%M:%S", &t);
-            offset += sprintf_s(buf + offset, 1024 - offset, " [%s] ", tag);
+            offset = strftime(buf, 1024, "[%Y-%m-%d %H:%M:%S", &t);
+            offset += sprintf_s(buf + offset, 1024 - offset, " %s] ", tag);
         }
         else {
-            offset = sprintf_s(buf, 1024, "%s [%s] ", "0000-00-00 00:00:00", tag);
+            offset = sprintf_s(buf, 1024, "[%s %s] ", "0000-00-00 00:00:00", tag);
         }
 
         _vsnprintf_s(buf + offset, 1024 - offset, 1024 - offset, format, args);

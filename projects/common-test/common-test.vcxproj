@@ -11,9 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0D0D5B6D-7092-458D-85A0-7B63CA5EF339}</ProjectGuid>
+    <ProjectGuid>{D09FC85A-336A-4BAA-84DA-A462DD897022}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>jsontest</RootNamespace>
+    <RootNamespace>commontest</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -76,10 +76,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClInclude Include="DebugConfig.h" />
+    <ClInclude Include="LogUtil.h" />
+    <ClInclude Include="QuickMutex.h" />
+    <ClInclude Include="TimerEngine.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cppJSON.hpp" />
+    <ClCompile Include="LogUtil.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="TimerEngine.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
