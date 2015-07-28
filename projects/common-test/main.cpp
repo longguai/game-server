@@ -6,29 +6,11 @@
 #include "TimerEngine.h"
 
 int main() {
-    //try {
-    //    jw::Win32Service service;
-    //    //service.install("Test Service");
-    //    service.uninstall("Test Service");
-    //    //char name[] = "Test Service";
-    //    //service.start(name);
-    //    //std::this_thread::sleep_for(std::chrono::seconds(10));
-    //}
-    //catch (std::exception &e) {
-    //    LOG_ERROR("%s", e.what());
-    //}
-    //{
-    //    void *p = jw::MemoryPool<sizeof(int), 100>::allocate(1);
-    //    *(int *)p = 0;
-    //    jw::MemoryPool<sizeof(int), 100>::deallocate(p);
-    //}
-    //return 0;
     jw::TimerEngine te;
     te.setTimer(1, std::chrono::milliseconds(1000), jw::TimerEngine::REPEAT_FOREVER, [](int64_t dt){ LOG_INFO("timer dt = %I64d", dt); });
     getchar();
 
     return 0;
-    //LOG_ASSERT(0);
 
 #define ESCAPE std::chrono::seconds(1)
     puts("begin");
