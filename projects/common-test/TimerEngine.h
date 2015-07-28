@@ -18,19 +18,22 @@ namespace jw {
 
         static const uint32_t REPEAT_FOREVER = UINT32_MAX;
 
-        uintptr_t setTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, const std::function<void (int64_t)> &callback);
-        uintptr_t setTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, std::function<void (int64_t)> &&callback);
+        uintptr_t registerTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, const std::function<void (int64_t)> &callback);
+        uintptr_t registerTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, std::function<void (int64_t)> &&callback);
 
-        bool killTimer(uintptr_t timerId);
+        bool unregisterTimer(uintptr_t timerId);
 
     private:
         template <class _Function>
-        uintptr_t _SetTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, _Function &&callback);
+        uintptr_t _RegisterTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, _Function &&callback);
+
+        bool _UnregisterTimer(uintptr_t timerId);
 
     private:
         std::vector<TimerItem> _itemsActive;
-
+        volatile bool _changedInTimeThread;
         QuickMutex _mutex;
+
         std::thread *_thread;
         volatile bool _shouldQuit;
 

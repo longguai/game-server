@@ -14,6 +14,7 @@ namespace jw {
 
     TimerEngine::TimerEngine() {
         _shouldQuit = false;
+        _changedInTimeThread = false;
         _thread = new std::thread(std::bind(&TimerEngine::_ThreadProc, this));
     }
 
@@ -29,14 +30,11 @@ namespace jw {
     }
 
     template <class _Function>
-    uintptr_t TimerEngine::_SetTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, _Function &&callback) {
+    uintptr_t TimerEngine::_RegisterTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, _Function &&callback) {
         LOG_ASSERT(timerId != 0);
         if (timerId == 0) {
             return 0;
         }
-
-        std::lock_guard<QuickMutex> g(_mutex);
-        (void)g;
 
         std::vector<TimerItem>::iterator it = std::find_if(_itemsActive.begin(), _itemsActive.end(), [timerId](const TimerItem &item) {
             return item.timerId == timerId;
@@ -66,18 +64,37 @@ namespace jw {
         return timerId;
     }
 
-    uintptr_t TimerEngine::setTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, const std::function<void (int64_t)> &callback) {
-        return _SetTimer(timerId, elapse, repeatTimes, callback);
+    uintptr_t TimerEngine::registerTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, const std::function<void (int64_t)> &callback) {
+        if (std::this_thread::get_id() == _thread->get_id()) {
+            uintptr_t ret = _RegisterTimer(timerId, elapse, repeatTimes, callback);
+            if (ret != 0) {
+                _changedInTimeThread = true;
+            }
+            return ret;
+        }
+        else {
+            std::lock_guard<QuickMutex> g(_mutex);
+            (void)g;
+            return _RegisterTimer(timerId, elapse, repeatTimes, callback);
+        }
     }
 
-    uintptr_t TimerEngine::setTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, std::function<void (int64_t)> &&callback) {
-        return _SetTimer(timerId, elapse, repeatTimes, callback);
+    uintptr_t TimerEngine::registerTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, std::function<void (int64_t)> &&callback) {
+        if (std::this_thread::get_id() == _thread->get_id()) {
+            uintptr_t ret = _RegisterTimer(timerId, elapse, repeatTimes, callback);
+            if (ret != 0) {
+                _changedInTimeThread = true;
+            }
+            return ret;
+        }
+        else {
+            std::lock_guard<QuickMutex> g(_mutex);
+            (void)g;
+            return _RegisterTimer(timerId, elapse, repeatTimes, callback);
+        }
     }
 
-    bool TimerEngine::killTimer(uintptr_t timerId) {
-        std::lock_guard<QuickMutex> g(_mutex);
-        (void)g;
-
+    bool TimerEngine::_UnregisterTimer(uintptr_t timerId) {
         std::vector<TimerItem>::iterator it = std::find_if(_itemsActive.begin(), _itemsActive.end(), [timerId](const TimerItem &item) {
             return item.timerId == timerId;
         });
@@ -88,20 +105,37 @@ namespace jw {
         return true;
     }
 
+    bool TimerEngine::unregisterTimer(uintptr_t timerId) {
+        if (std::this_thread::get_id() == _thread->get_id()) {
+            bool ret = _UnregisterTimer(timerId);
+            if (ret) {
+                _changedInTimeThread = true;
+            }
+            return ret;
+        }
+        else {
+            std::lock_guard<QuickMutex> g(_mutex);
+            (void)g;
+            return _UnregisterTimer(timerId);
+        }
+    }
+
     void TimerEngine::_ThreadProc() {
         std::chrono::high_resolution_clock::time_point prev = std::chrono::high_resolution_clock::now();
 
         while (!_shouldQuit) {
+            bool shouldSleep = true;
             {
                 std::lock_guard<QuickMutex> g(_mutex);
                 (void)g;
 
                 std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
-
-                for (std::vector<TimerItem>::iterator it = _itemsActive.begin(); it != _itemsActive.end();) {
-                    TimerItem *pTimerItem = &*it;
+                
+                _changedInTimeThread = false;
+                for (std::vector<TimerItem>::size_type i = 0; i < _itemsActive.size();) {
+                    TimerItem *pTimerItem = &_itemsActive[i];
                     if (pTimerItem->nextTime > now) {
-                        ++it;
+                        ++i;
                         continue;
                     }
 
@@ -109,6 +143,10 @@ namespace jw {
                     int64_t dt = std::chrono::duration_cast<std::chrono::milliseconds>(now - pTimerItem->lastTime).count();
                     try {
                         pTimerItem->callback(dt);
+                        if (_changedInTimeThread) {
+                            shouldSleep = false;
+                            break;
+                        }
                     }
                     catch (std::exception &e) {
                         LOG_ERROR("%s", e.what());
@@ -118,19 +156,21 @@ namespace jw {
                         --pTimerItem->repeatTimes;
                         if (pTimerItem->repeatTimes == 0) {
                             erased = true;
-                            it = _itemsActive.erase(it);
+                            _itemsActive.erase(_itemsActive.begin() + i);
                         }
                     }
 
                     if (!erased) {
                         pTimerItem->lastTime = now;
                         pTimerItem->nextTime += std::chrono::milliseconds(pTimerItem->elapse);
-                        ++it;
+                        ++i;
                     }
                 }
                 prev = now;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            if (shouldSleep) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
         }
     }
 }

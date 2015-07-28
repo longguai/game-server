@@ -7,7 +7,11 @@
 
 int main() {
     jw::TimerEngine te;
-    te.setTimer(1, std::chrono::milliseconds(1000), jw::TimerEngine::REPEAT_FOREVER, [](int64_t dt){ LOG_INFO("timer dt = %I64d", dt); });
+    te.registerTimer(1, std::chrono::milliseconds(1000), jw::TimerEngine::REPEAT_FOREVER, [&te](int64_t dt) {
+        LOG_INFO("timer dt = %I64d", dt);
+        te.unregisterTimer(1);
+        te.registerTimer(2, std::chrono::milliseconds(500), 20, [](int64_t dt) { LOG_INFO("dt = %I64d", dt); });
+    });
     getchar();
 
     return 0;
