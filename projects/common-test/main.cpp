@@ -1,65 +1,65 @@
 ﻿#include "BasicServer.hpp"
 #include "BasicSession.hpp"
 
-namespace echo {
-    using jw::Session;
-    class ServerProxy {
-    public:
-        void acceptCallback(asio::ip::tcp::socket &&socket) {
-            std::shared_ptr<Session> s = std::make_shared<Session>(std::move(socket),
-                std::bind(&ServerProxy::_sessionCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-            s->start();
-        }
-
-    private:
-        void _sessionCallback(const std::shared_ptr<Session> &s, jw::SessionEvent event, const char *data, size_t length) {
-            if (data != nullptr) {
-                s->deliver(data, length);
-            }
-        }
-    };
-
-    typedef jw::BasicServer<ServerProxy, 128> Server;
-}
+//namespace echo {
+//    using jw::Session;
+//    class ServerProxy {
+//    public:
+//        void acceptCallback(asio::ip::tcp::socket &&socket) {
+//            std::shared_ptr<Session> s = std::make_shared<Session>(std::move(socket),
+//                std::bind(&ServerProxy::_sessionCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+//            s->start();
+//        }
+//
+//    private:
+//        void _sessionCallback(const std::shared_ptr<Session> &s, jw::SessionEvent event, const char *data, size_t length) {
+//            if (data != nullptr) {
+//                s->deliver(data, length);
+//            }
+//        }
+//    };
+//
+//    typedef jw::BasicServer<ServerProxy, 128> Server;
+//}
 
 #include <unordered_set>
 
-namespace chat {
-    using jw::Session;
-    class ServerProxy {
-    public:
-        void acceptCallback(asio::ip::tcp::socket &&socket) {
-            std::shared_ptr<Session> s = std::make_shared<Session>(std::move(socket),
-                std::bind(&ServerProxy::_sessionCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-            _mutex.lock();
-            _sessions.insert(s);
-            _mutex.unlock();
-            s->start();
-        }
-
-    private:
-        void _sessionCallback(const std::shared_ptr<Session> &s, jw::SessionEvent event, const char *data, size_t length) {
-            if (data != nullptr) {
-                _mutex.lock();
-                std::for_each(_sessions.begin(), _sessions.end(), [data, length](const std::shared_ptr<Session> &s) {
-                    s->deliver(data, length);
-                });
-                _mutex.unlock();
-            }
-            else {
-                _mutex.lock();
-                _sessions.erase(s);
-                _mutex.unlock();
-            }
-        }
-
-    private:
-        std::unordered_set<std::shared_ptr<Session> > _sessions;
-        std::mutex _mutex;
-    };
-
-    typedef jw::BasicServer<ServerProxy, 128> Server;
-}
+//namespace chat {
+//    using jw::Session;
+//    class ServerProxy {
+//    public:
+//        void acceptCallback(asio::ip::tcp::socket &&socket) {
+//            std::shared_ptr<Session> s = std::make_shared<Session>(std::move(socket),
+//                std::bind(&ServerProxy::_sessionCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+//            _mutex.lock();
+//            _sessions.insert(s);
+//            _mutex.unlock();
+//            s->start();
+//        }
+//
+//    private:
+//        void _sessionCallback(const std::shared_ptr<Session> &s, jw::SessionEvent event, const char *data, size_t length) {
+//            if (data != nullptr) {
+//                _mutex.lock();
+//                std::for_each(_sessions.begin(), _sessions.end(), [data, length](const std::shared_ptr<Session> &s) {
+//                    s->deliver(data, length);
+//                });
+//                _mutex.unlock();
+//            }
+//            else {
+//                _mutex.lock();
+//                _sessions.erase(s);
+//                _mutex.unlock();
+//            }
+//        }
+//
+//    private:
+//        std::unordered_set<std::shared_ptr<Session> > _sessions;
+//        std::mutex _mutex;
+//    };
+//
+//    typedef jw::BasicServer<ServerProxy, 128> Server;
+//}
 
 #include "DebugConfig.h"
 #include <thread>
@@ -70,8 +70,114 @@ namespace chat {
 
 #include "IOService.hpp"
 
+#include "BasicRoom.hpp"
+#include "PacketSplitter.hpp"
+
+namespace gs {
+    struct ConnectedUser : jw::JsonPacketSplitter {
+        int64_t id;
+        std::string name;
+    };
+
+    enum class UserStatus {
+        Free = 0,
+        HandsUp = 1,
+        Playing = 2
+    };
+
+    struct UserBase : ConnectedUser {
+        int desk = -1;
+        int seat = -1;
+        UserStatus status = UserStatus::Free;
+        uint32_t winCount = 0;
+        uint32_t tieCount = 0;
+        uint32_t loseCount = 0;
+        int32_t scores = 0;
+
+        std::string encodeJoinIn() {
+            return "";
+        }
+        std::string encodeLeave() {
+            return "";
+        }
+    };
+
+    typedef jw::BasicSession<UserBase, 1024U> Session;
+    typedef gs::BasicRoom<Session, gs::BasicLogic<4>, 100> GameRoom;
+
+    class ServerProxy {
+    public:
+        void acceptCallback(asio::ip::tcp::socket &&socket) {
+            std::shared_ptr<Session> s = std::make_shared<Session>(std::move(socket),
+                std::bind(&ServerProxy::_sessionCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+            {
+                std::lock_guard<jw::QuickMutex> g(_mutex);
+                (void)g;
+
+                _sessions.insert(s);
+            }
+            s->start();
+        }
+
+    private:
+        void _sessionCallback(const std::shared_ptr<Session> &s, jw::SessionEvent event, const char *data, size_t length) {
+            if (data != nullptr) {
+                try {
+                    jw::cppJSON jsonRecv = nullptr;
+                    s->decodeRecvPacket(jsonRecv, data, length);
+                    if (jsonRecv == nullptr) {
+                        return;
+                    }
+
+                    std::string content = jsonRecv.findAs<std::string>("content");
+
+                    jw::cppJSON jsonSend(jw::cppJSON::ValueType::Object);
+                    jsonSend.insert(std::make_pair("ip", s->getRemoteIP()));
+                    jsonSend.insert(std::make_pair("port", s->getRemotePort()));
+                    jsonSend.insert(std::make_pair("content", content));
+
+                    std::vector<char> buf;
+                    s->encodeSendPacket(buf, jsonSend);
+
+                    std::lock_guard<jw::QuickMutex> g(_mutex);
+                    (void)g;
+                    std::for_each(_sessions.begin(), _sessions.end(), [&buf](const std::shared_ptr<Session> &s) {
+                        s->deliver(&buf.at(0), buf.size());
+                    });
+                }
+                catch (std::exception &e) {
+                    LOG_ERROR("%s", e.what());
+
+                    std::lock_guard<jw::QuickMutex> g(_mutex);
+                    (void)g;
+
+                    _sessions.erase(s);
+                }
+            }
+            else {
+                std::lock_guard<jw::QuickMutex> g(_mutex);
+                (void)g;
+
+                _sessions.erase(s);
+            }
+        }
+
+    private:
+        std::unordered_set<std::shared_ptr<Session> > _sessions;
+        jw::QuickMutex _mutex;
+
+        GameRoom _room;
+    };
+
+    typedef jw::BasicServer<ServerProxy, 128> Server;
+}
+
+#include "BasicRoom.hpp"
+
+#include <iostream>
+
 int main() {
-    jw::IOService<chat::Server> s(8899);
+    jw::IOService<gs::Server> s(8899);
     (void)s;
     getchar();
     return 0;

@@ -9,6 +9,9 @@
     <ClInclude Include="asio_header.hpp" />
     <ClInclude Include="BasicServer.hpp" />
     <ClInclude Include="IOService.hpp" />
+    <ClInclude Include="BasicTable.hpp" />
+    <ClInclude Include="BasicRoom.hpp" />
+    <ClInclude Include="PacketSplitter.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LogUtil.cpp" />

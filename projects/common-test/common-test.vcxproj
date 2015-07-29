@@ -80,7 +80,10 @@
     <ClInclude Include="BasicServer.hpp" />
     <ClInclude Include="BasicSession.hpp" />
     <ClInclude Include="DebugConfig.h" />
+    <ClInclude Include="BasicRoom.hpp" />
+    <ClInclude Include="BasicTable.hpp" />
     <ClInclude Include="LogUtil.h" />
+    <ClInclude Include="PacketSplitter.hpp" />
     <ClInclude Include="QuickMutex.h" />
     <ClInclude Include="IOService.hpp" />
     <ClInclude Include="TimerEngine.h" />
