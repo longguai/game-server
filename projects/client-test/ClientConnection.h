@@ -1,4 +1,4 @@
-#ifndef _CLIENT_CONNECTION_H_
+﻿#ifndef _CLIENT_CONNECTION_H_
 #define _CLIENT_CONNECTION_H_
 
 #if (defined _WIN32) || (defined WIN32)
