@@ -76,9 +76,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="asio_header.hpp" />
+    <ClInclude Include="BasicServer.hpp" />
+    <ClInclude Include="BasicSession.hpp" />
     <ClInclude Include="DebugConfig.h" />
     <ClInclude Include="LogUtil.h" />
     <ClInclude Include="QuickMutex.h" />
+    <ClInclude Include="IOService.hpp" />
     <ClInclude Include="TimerEngine.h" />
   </ItemGroup>
   <ItemGroup>

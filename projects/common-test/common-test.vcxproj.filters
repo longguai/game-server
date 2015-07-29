@@ -5,6 +5,10 @@
     <ClInclude Include="LogUtil.h" />
     <ClInclude Include="QuickMutex.h" />
     <ClInclude Include="TimerEngine.h" />
+    <ClInclude Include="BasicSession.hpp" />
+    <ClInclude Include="asio_header.hpp" />
+    <ClInclude Include="BasicServer.hpp" />
+    <ClInclude Include="IOService.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LogUtil.cpp" />
