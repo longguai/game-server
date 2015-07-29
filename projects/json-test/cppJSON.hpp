@@ -31,9 +31,6 @@
 #include <inttypes.h>  // for PRId64
 #include <string.h>  // for strncmp
 #include <stdio.h>
-#ifdef _MSC_VER
-#define snprintf sprintf_s
-#endif
 
 #include <stdlib.h>  // for atoll
 #include <stdexcept>
@@ -49,7 +46,16 @@
 
 #include <iterator>
 #include <algorithm>
+
+#ifdef _MSC_VER
+#include <crtdbg.h>
+#define snprintf sprintf_s
+#pragma push_macro("assert")
+#undef assert
+#define assert _ASSERTE
+#else
 #include <assert.h>
+#endif
 
 namespace jw {
 
@@ -285,13 +291,17 @@ namespace jw {
         }
 
         bool empty() const {
-            assert(_valueType == ValueType::Array || _valueType == ValueType::Object);
+            if (_valueType != ValueType::Array && _valueType != ValueType::Object) {
+                throw std::logic_error("Only Array and Object support!");
+            }
             return (_child->_next == _child);
         }
 
-        IntegerType size() const {
-            assert(_valueType == ValueType::Array || _valueType == ValueType::Object);
-            return (_child->_valueInt);
+        typename std::make_unsigned<IntegerType>::type size() const {
+            if (_valueType != ValueType::Array && _valueType != ValueType::Object) {
+                throw std::logic_error("Only Array and Object support!");
+            }
+            return static_cast<typename std::make_unsigned<IntegerType>::type>(_child->_valueInt);
         }
 
     public:
@@ -406,7 +416,9 @@ namespace jw {
         const_reverse_iterator crend() const { return const_reverse_iterator(_child->_next); }
 
         template <class _T> iterator insert(const_iterator where, _T &&val) {
-            assert(_valueType == ValueType::Array);
+            if (_valueType != ValueType::Array) {
+                throw std::logic_error("Only Array support!");
+            }
             pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
@@ -419,7 +431,9 @@ namespace jw {
         }
 
         template <class _T> iterator insert(const_iterator where, size_t n, const _T &val) {
-            assert(_valueType == ValueType::Array);
+            if (_valueType != ValueType::Array) {
+                throw std::logic_error("Only Array support!");
+            }
             pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
@@ -432,7 +446,9 @@ namespace jw {
         }
 
         template <class _InputIterator> iterator insert(const_iterator where, _InputIterator first, _InputIterator last) {
-            assert(_valueType == ValueType::Array);
+            if (_valueType != ValueType::Array) {
+                throw std::logic_error("Only Array support!");
+            }
             pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
@@ -451,7 +467,9 @@ namespace jw {
         }
 
         template <class _T> iterator insert(const_iterator where, std::initializer_list<_T> il) {
-            assert(_valueType == ValueType::Array);
+            if (_valueType != ValueType::Array) {
+                throw std::logic_error("Only Array support!");
+            }
             pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
@@ -470,7 +488,9 @@ namespace jw {
         }
 
         iterator erase(const_iterator where) {
-            assert(_valueType == ValueType::Array || _valueType == ValueType::Object);
+            if (_valueType != ValueType::Array && _valueType != ValueType::Object) {
+                throw std::logic_error("Only Array and Object support!");
+            }
             pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
@@ -483,7 +503,9 @@ namespace jw {
         }
 
         template <class _String> inline IntegerType erase(const _String &key) {
-            assert(_valueType == ValueType::Object);
+            if (_valueType != ValueType::Object) {
+                throw std::logic_error("Only Object support!");
+            }
             pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
             if (ptr != nullptr) {
                 _DoErase(ptr);
@@ -493,7 +515,9 @@ namespace jw {
         }
 
         iterator erase(const_iterator first, const_iterator last) {
-            assert(_valueType == ValueType::Array || _valueType == ValueType::Object);
+            if (_valueType != ValueType::Array && _valueType != ValueType::Object) {
+                throw std::logic_error("Only Array and Object support!");
+            }
             pointer ptr = first._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
             assert(_RangeCheck(ptr));
@@ -508,19 +532,25 @@ namespace jw {
         }
 
         template <class _String> inline iterator find(const _String &key) {
-            assert(_valueType == ValueType::Object);
+            if (_valueType != ValueType::Object) {
+                throw std::logic_error("Only Object support!");
+            }
             pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
             return ptr != nullptr ? iterator(ptr) : end();
         }
 
         template <class _String> inline const_iterator find(const _String &key) const {
-            assert(_valueType == ValueType::Object);
+            if (_valueType != ValueType::Object) {
+                throw std::logic_error("Only Object support!");
+            }
             pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
             return ptr != nullptr ? const_iterator(ptr) : end();
         }
 
         template <class _T, class _String> inline _T findAs(const _String &key) const {
-            assert(_valueType == ValueType::Object);
+            if (_valueType != ValueType::Object) {
+                throw std::logic_error("Only Object support!");
+            }
             const char *str = __cpp_basic_json_impl::_FixString(key);
             pointer ptr = _DoFind(str);
             if (ptr == nullptr) {
@@ -615,7 +645,9 @@ namespace jw {
         }
 
         pointer _DoFind(const char *key) const {
-            assert(_valueType == ValueType::Object);
+            if (_valueType != ValueType::Object) {
+                throw std::logic_error("Only Object support!");
+            }
             if (key == nullptr || *key == '\0') return nullptr;
             for (const_iterator it = begin(); it != end(); ++it) {
                 if (strcmp(it->_key.c_str(), key) == 0) {  // 这里用it->_key.compare有问题，原因未知
@@ -1487,5 +1519,11 @@ namespace jw {
 
     typedef BasicJSON<int64_t, double, std::char_traits<char>, std::allocator<char> > cppJSON;
 }
+
+#ifdef _MSC_VER
+#undef snprintf
+#undef assert
+#pragma pop_macro("assert")
+#endif
 
 #endif
