@@ -1,4 +1,4 @@
-#ifndef _CIRCULAR_IO_BUFFER_H_
+﻿#ifndef _CIRCULAR_IO_BUFFER_H_
 #define _CIRCULAR_IO_BUFFER_H_
 
 #include <string.h>
@@ -37,7 +37,7 @@ namespace jw {
 
         inline int freeSize() {
             if (_head <= _tail) {
-                return _N - 1 - _tail + _head;
+                return _N + _head - _tail - 1;
             } else {
                 return _head - _tail - 1;
             }
@@ -48,20 +48,20 @@ namespace jw {
                 return 0;
             }
 
-            if (_tail > _head) {
-                int s = _tail - _head;
-                if (s >= len) {
+            if (_tail > _head) {  // _tail在_head后面
+                int s = _tail - _head;  // 有效字节数
+                if (s >= len) {  // 大于接收缓冲区长度，则填满接收缓冲区为止
                     memcpy(data, _buf + _head, len);
                     _head += len;
                     return len;
-                } else {
+                } else {  // 小于接收缓冲区长度，则全部读走
                     memcpy(data, _buf + _head, s);
                     _head += s;
                     return s;
                 }
-            } else {
-                int s1 = _N - _head;
-                if (s1 >= len) {
+            } else {  // _tail在_head前面
+                int s1 = _N - _head;  // 尾部有效字节数
+                if (s1 >= len) {  // 大于接收缓冲区长度，则填满接收缓冲区为止
                     memcpy(data, _buf + _head, len);
                     _head += len;
                     if (_head == _N) {
@@ -69,9 +69,14 @@ namespace jw {
                     }
                     return len;
                 } else {
-                    memcpy(data, _buf + _head, s1);
-                    _head += s1;
-                    return s1 + read(data + s1, len - s1);
+                    if (s1 > 0) {  // 小于接收缓冲区长度，则先全部读走
+                        memcpy(data, _buf + _head, s1);
+                        _head += s1;
+                        return s1 + read(data + s1, len - s1);  // 再拼从接环形区头部读的数据
+                    } else {  // 尾部有效字节数为0，从接环形区头部读
+                        _head = 0;
+                        return read(data, len);
+                    }
                 }
             }
         }
@@ -81,22 +86,25 @@ namespace jw {
                 return 0;
             }
 
-            if (_tail >= _head) {
-                int s = _N - _tail - 1;
-                if (s >= len) {
+            if (_tail >= _head) {  // _tail在_head后面
+                int s = _N - _tail - 1;  // 尾部空闲的字节数
+                if (s >= len) {  // 足够存放
                     memcpy(_buf + _tail, data, len);
                     _tail += len;
                     return len;
-                } else if (s > 0) {
-                    memcpy(_buf + _tail, data, s);
-                    _tail += s;
-                    return s + write(data + s, len - s);
                 } else {
-                    _buf[_tail] = *data;
-                    _tail = 0;
-                    return 1 + write(data + 1, len - 1);
+                    if (s > 0) {
+                        memcpy(_buf + _tail, data, s);  // 写满尾部空闲的字节数
+                        _tail += s;
+                        return s + write(data + s, len - s);  // 再往头部写
+                    } else {
+                        _buf[_tail] = *data;  // 写一个字节到尾部
+                        _tail = 0;
+                        return 1 + write(data + 1, len - 1);  // 再往头部写
+                    }
                 }
-            } else {
+            } else {  // _tail在_head前面
+                // 写到不覆盖到_head即可
                 int s = _head - _tail - 1;
                 if (s >= len) {
                     s = len;
