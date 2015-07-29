@@ -239,6 +239,11 @@ namespace jw {
             other.reset();
         }
 
+        // 用nullptr构造
+        BasicJSON<_Integer, _Float, _Traits, _Alloc>(std::nullptr_t) {
+            reset();
+        }
+
         // 赋值
         BasicJSON<_Integer, _Float, _Traits, _Alloc> &operator=(const BasicJSON<_Integer, _Float, _Traits, _Alloc> &other) {
             clear();
@@ -519,9 +524,9 @@ namespace jw {
             const char *str = __cpp_basic_json_impl::_FixString(key);
             pointer ptr = _DoFind(str);
             if (ptr == nullptr) {
-                char str[128];
-                snprintf(str, 128, "Cannot find value for key = %s", str);
-                throw std::logic_error(str);
+                char err[128];
+                snprintf(err, 128, "Cannot find value for key = %s", str);
+                throw std::logic_error(err);
             }
             return ptr->as<_T>();
         }
@@ -613,7 +618,7 @@ namespace jw {
             assert(_valueType == ValueType::Object);
             if (key == nullptr || *key == '\0') return nullptr;
             for (const_iterator it = begin(); it != end(); ++it) {
-                if (it->_key.compare(key) == 0) {
+                if (strcmp(it->_key.c_str(), key) == 0) {  // 这里用it->_key.compare有问题，原因未知
                     return it._ptr;
                 }
             }
