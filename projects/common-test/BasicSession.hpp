@@ -58,6 +58,11 @@ namespace jw {
             _doRead();
         }
 
+        const std::string &getRemoteIP() const { return _remoteIP; }
+        unsigned short getRemotePort() const { return _remotePort; }
+        const std::string &getLocalIP() const { return _localIP; }
+        unsigned short getLocalPort() const { return _localPort; }
+
         void deliver(const void *data, size_t length) {
             std::lock_guard<jw::QuickMutex> g(_mutex);
             (void)g;
