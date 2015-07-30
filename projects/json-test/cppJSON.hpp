@@ -48,14 +48,21 @@
 #include <algorithm>
 
 #ifdef _MSC_VER
-#include <crtdbg.h>
-#define snprintf sprintf_s
-#pragma push_macro("assert")
-#undef assert
-#define assert _ASSERTE
-#else
-#include <assert.h>
-#endif
+#   include <crtdbg.h>
+#   ifdef snprintf
+#       define SNPRINTF_IS_DEFINED 1
+#       pragma push_macro("snprintf")
+#       undef snprintf
+#   else  // snprintf
+#       define SNPRINTF_IS_DEFINED 0
+#   endif  // snprintf
+#   define snprintf sprintf_s
+#   pragma push_macro("assert")
+#   undef assert
+#   define assert _ASSERTE
+#else  // _MSC_VER
+#   include <assert.h>
+#endif  // _MSC_VER
 
 namespace jw {
 
@@ -1521,9 +1528,13 @@ namespace jw {
 }
 
 #ifdef _MSC_VER
-#undef snprintf
-#undef assert
-#pragma pop_macro("assert")
-#endif
+#   undef snprintf
+#   if SNPRINTF_IS_DEFINED
+#       pragma pop_macro("snprintf")
+#   endif  // SNPRINTF_IS_DEFINED
+#   undef SNPRINTF_IS_DEFINED
+#   undef assert
+#   pragma pop_macro("assert")
+#endif  // _MSC_VER
 
 #endif
