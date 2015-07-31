@@ -49,14 +49,16 @@
 
 #ifdef _MSC_VER
 #   include <crtdbg.h>
-#   ifdef snprintf
-#       define SNPRINTF_IS_DEFINED 1
-#       pragma push_macro("snprintf")
-#       undef snprintf
-#   else  // snprintf
-#       define SNPRINTF_IS_DEFINED 0
-#   endif  // snprintf
-#   define snprintf sprintf_s
+#   if _MSC_VER < 1900
+#       ifdef snprintf
+#           define SNPRINTF_IS_DEFINED 1
+#           pragma push_macro("snprintf")
+#           undef snprintf
+#       else  // snprintf
+#           define SNPRINTF_IS_DEFINED 0
+#       endif  // snprintf
+#       define snprintf sprintf_s
+#   endif  // _MSC_VER < 1900
 #   pragma push_macro("assert")
 #   undef assert
 #   define assert _ASSERTE
@@ -1528,11 +1530,13 @@ namespace jw {
 }
 
 #ifdef _MSC_VER
-#   undef snprintf
-#   if SNPRINTF_IS_DEFINED
-#       pragma pop_macro("snprintf")
-#   endif  // SNPRINTF_IS_DEFINED
-#   undef SNPRINTF_IS_DEFINED
+#   if _MSC_VER < 1900
+#       undef snprintf
+#       if SNPRINTF_IS_DEFINED
+#           pragma pop_macro("snprintf")
+#       endif  // SNPRINTF_IS_DEFINED
+#       undef SNPRINTF_IS_DEFINED
+#   endif  // _MSC_VER < 1900
 #   undef assert
 #   pragma pop_macro("assert")
 #endif  // _MSC_VER
