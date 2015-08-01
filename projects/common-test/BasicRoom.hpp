@@ -3,15 +3,9 @@
 
 #include "BasicTable.hpp"
 #include "QuickMutex.h"
-#include "PacketSplitter.hpp"
 #include <unordered_set>
 
 namespace gs {
-    struct ConnectedUser : jw::JsonPacketSplitter {
-        int64_t id;
-        std::string name;
-    };
-
     template <class _GameTable, size_t _TableCount>
     class BasicRoom {
     public:

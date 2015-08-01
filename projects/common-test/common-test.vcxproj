@@ -79,6 +79,7 @@
     <ClInclude Include="asio_header.hpp" />
     <ClInclude Include="BasicServer.hpp" />
     <ClInclude Include="BasicSession.hpp" />
+    <ClInclude Include="ConnectedUser.hpp" />
     <ClInclude Include="DebugConfig.h" />
     <ClInclude Include="BasicRoom.hpp" />
     <ClInclude Include="BasicTable.hpp" />

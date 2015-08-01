@@ -12,6 +12,7 @@
     <ClInclude Include="BasicTable.hpp" />
     <ClInclude Include="BasicRoom.hpp" />
     <ClInclude Include="PacketSplitter.hpp" />
+    <ClInclude Include="ConnectedUser.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LogUtil.cpp" />

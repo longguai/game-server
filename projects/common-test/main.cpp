@@ -1,65 +1,9 @@
 ﻿#include "BasicServer.hpp"
 #include "BasicSession.hpp"
-
-//namespace echo {
-//    using jw::Session;
-//    class ServerProxy {
-//    public:
-//        void acceptCallback(asio::ip::tcp::socket &&socket) {
-//            std::shared_ptr<Session> s = std::make_shared<Session>(std::move(socket),
-//                std::bind(&ServerProxy::_sessionCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-//            s->start();
-//        }
-//
-//    private:
-//        void _sessionCallback(const std::shared_ptr<Session> &s, jw::SessionEvent event, const char *data, size_t length) {
-//            if (data != nullptr) {
-//                s->deliver(data, length);
-//            }
-//        }
-//    };
-//
-//    typedef jw::BasicServer<ServerProxy, 128> Server;
-//}
+#include "IOService.hpp"
+#include "PacketSplitter.hpp"
 
 #include <unordered_set>
-
-//namespace chat {
-//    using jw::Session;
-//    class ServerProxy {
-//    public:
-//        void acceptCallback(asio::ip::tcp::socket &&socket) {
-//            std::shared_ptr<Session> s = std::make_shared<Session>(std::move(socket),
-//                std::bind(&ServerProxy::_sessionCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-//            _mutex.lock();
-//            _sessions.insert(s);
-//            _mutex.unlock();
-//            s->start();
-//        }
-//
-//    private:
-//        void _sessionCallback(const std::shared_ptr<Session> &s, jw::SessionEvent event, const char *data, size_t length) {
-//            if (data != nullptr) {
-//                _mutex.lock();
-//                std::for_each(_sessions.begin(), _sessions.end(), [data, length](const std::shared_ptr<Session> &s) {
-//                    s->deliver(data, length);
-//                });
-//                _mutex.unlock();
-//            }
-//            else {
-//                _mutex.lock();
-//                _sessions.erase(s);
-//                _mutex.unlock();
-//            }
-//        }
-//
-//    private:
-//        std::unordered_set<std::shared_ptr<Session> > _sessions;
-//        std::mutex _mutex;
-//    };
-//
-//    typedef jw::BasicServer<ServerProxy, 128> Server;
-//}
 
 #include "DebugConfig.h"
 #include <thread>
@@ -68,41 +12,8 @@
 
 #include "TimerEngine.h"
 
-#include "IOService.hpp"
-
-#include "BasicRoom.hpp"
-#include "PacketSplitter.hpp"
-
 namespace gs {
-    enum class UserStatus {
-        Free = 0,
-        HandsUp = 1,
-        Playing = 2
-    };
-
-    struct RoomUserBase : ConnectedUser {
-        int desk = -1;
-        int seat = -1;
-        UserStatus status = UserStatus::Free;
-        uint32_t winCount = 0;
-        uint32_t tieCount = 0;
-        uint32_t loseCount = 0;
-        int32_t scores = 0;
-
-        std::string encodeJoinIn() {
-            return "";
-        }
-        std::string encodeLeave() {
-            return "";
-        }
-    };
-
-    typedef jw::BasicSession<RoomUserBase, 1024U> Session;
-
-    typedef jw::BasicSession<RoomUserBase, 1024U> GameUser;
-    typedef gs::BasicLogic<4> GameLogic;
-    typedef gs::BasicTable<GameUser, GameLogic> GameTable;
-    typedef gs::BasicRoom<GameTable, 100> GameRoom;
+    typedef jw::BasicSession<jw::JsonPacketSplitter, 1024U> Session;
 
     class ServerProxy {
     public:
@@ -162,8 +73,6 @@ namespace gs {
     private:
         std::unordered_set<std::shared_ptr<Session> > _sessions;
         jw::QuickMutex _mutex;
-
-        GameRoom _room;
     };
 
     typedef jw::BasicServer<ServerProxy, 128> Server;
