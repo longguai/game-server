@@ -9,15 +9,19 @@
 namespace gs {
 
     // 游戏逻辑
-    // 不一定非要继承它，但是一定要有一个静态成员ParticipantCount表示参与玩家数量
+    // 不一定非要继承它，但是一定要有如下成员
     template <size_t _ParticipantCount> struct BasicLogic {
         static const size_t ParticipantCount = _ParticipantCount;
+        void sitDown(unsigned seat) { }
+        void standUp(unsigned seat) { }
     };
 
     // 桌子
     template <class _GameUser, class _GameLogic>
-    struct BasicTable : public _GameLogic {
+    struct BasicTable {
         typedef _GameUser UserType;
+        typedef _GameLogic LogicType;
+        static const size_t ParticipantCount = _GameLogic::ParticipantCount;
 
         BasicTable<_GameUser, _GameLogic>() {
         }
@@ -30,6 +34,7 @@ namespace gs {
             }
 
             _participants[seat] = user;
+            _logic.sitDown(seat);
             return true;
         }
 
@@ -40,6 +45,7 @@ namespace gs {
                 return false;
             }
             _participants[seat].reset();
+            _logic.standUp(seat);
             return true;
         }
 
@@ -48,6 +54,8 @@ namespace gs {
         std::vector<std::shared_ptr<_GameUser> > _watchers;  // 旁观玩家
 
         jw::QuickMutex _mutex;
+
+        _GameLogic _logic;
     };
 }
 
