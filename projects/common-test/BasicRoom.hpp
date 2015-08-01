@@ -15,17 +15,17 @@ namespace gs {
 
         //void deliver(const std::shared_ptr<UserType> &user, jw::cppJSON &json) { }
 
-        void addUser(const std::shared_ptr<UserType> &user) {
-            std::lock_guard<jw::QuickMutex> g(_mutex);
-            (void)g;
-            _userSet.insert(user);
-        }
+        //void addUser(const std::shared_ptr<UserType> &user) {
+        //    std::lock_guard<jw::QuickMutex> g(_mutex);
+        //    (void)g;
+        //    _userSet.insert(user);
+        //}
 
-        void removeUser(const std::shared_ptr<UserType> &user) {
-            std::lock_guard<jw::QuickMutex> g(_mutex);
-            (void)g;
-            _userSet.erase(user);
-        }
+        //void removeUser(const std::shared_ptr<UserType> &user) {
+        //    std::lock_guard<jw::QuickMutex> g(_mutex);
+        //    (void)g;
+        //    _userSet.erase(user);
+        //}
 
     protected:
         std::unordered_set<std::shared_ptr<UserType> > _userSet;
