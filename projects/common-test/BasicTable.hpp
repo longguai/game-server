@@ -22,10 +22,10 @@ namespace gs {
         BasicTable<_GameUser, _GameLogic>() {
         }
 
-        bool sitDown(const std::weak_ptr<_GameUser> &user, unsigned seat) {
+        bool sitDown(const std::shared_ptr<_GameUser> &user, unsigned seat) {
             std::lock_guard<jw::QuickMutex> g(_mutex);
             (void)g;
-            if (_participants[seat].lock() != nullptr) {
+            if (_participants[seat] != nullptr) {
                 return false;
             }
 
@@ -33,21 +33,21 @@ namespace gs {
             return true;
         }
 
-        bool standUp(const std::weak_ptr<_GameUser> &user, unsigned seat) {
+        bool standUp(const std::shared_ptr<_GameUser> &user, unsigned seat) {
             std::lock_guard<jw::QuickMutex> g(_mutex);
             (void)g;
-            if (_participants[seat].lock() == nullptr) {
+            if (_participants[seat] == nullptr) {
                 return false;
             }
             _participants[seat].reset();
             return true;
         }
 
-        //void deliver(const std::weak_ptr<_GameUser> &user, jw::cppJSON &json);
+        //void deliver(const std::shared_ptr<_GameUser> &user, jw::cppJSON &json);
 
-    private:
-        std::weak_ptr<_GameUser> _participants[_GameLogic::ParticipantCount];  // 参与玩家
-        std::vector<std::weak_ptr<_GameUser> > _watchers;  // 旁观玩家
+    protected:
+        std::shared_ptr<_GameUser> _participants[_GameLogic::ParticipantCount];  // 参与玩家
+        std::vector<std::shared_ptr<_GameUser> > _watchers;  // 旁观玩家
 
         jw::QuickMutex _mutex;
     };
