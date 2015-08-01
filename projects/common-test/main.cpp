@@ -74,18 +74,13 @@
 #include "PacketSplitter.hpp"
 
 namespace gs {
-    struct ConnectedUser : jw::JsonPacketSplitter {
-        int64_t id;
-        std::string name;
-    };
-
     enum class UserStatus {
         Free = 0,
         HandsUp = 1,
         Playing = 2
     };
 
-    struct UserBase : ConnectedUser {
+    struct RoomUserBase : ConnectedUser {
         int desk = -1;
         int seat = -1;
         UserStatus status = UserStatus::Free;
@@ -102,8 +97,12 @@ namespace gs {
         }
     };
 
-    typedef jw::BasicSession<UserBase, 1024U> Session;
-    typedef gs::BasicRoom<Session, gs::BasicLogic<4>, 100> GameRoom;
+    typedef jw::BasicSession<RoomUserBase, 1024U> Session;
+
+    typedef jw::BasicSession<RoomUserBase, 1024U> GameUser;
+    typedef gs::BasicLogic<4> GameLogic;
+    typedef gs::BasicTable<GameUser, GameLogic> GameTable;
+    typedef gs::BasicRoom<GameTable, 100> GameRoom;
 
     class ServerProxy {
     public:
@@ -123,8 +122,7 @@ namespace gs {
         void _sessionCallback(const std::shared_ptr<Session> &s, jw::SessionEvent event, const char *data, size_t length) {
             if (data != nullptr) {
                 try {
-                    jw::cppJSON jsonRecv = nullptr;
-                    s->decodeRecvPacket(jsonRecv, data, length);
+                    jw::cppJSON jsonRecv = s->decodeRecvPacket(data, length);
                     if (jsonRecv == nullptr) {
                         return;
                     }
@@ -136,8 +134,7 @@ namespace gs {
                     jsonSend.insert(std::make_pair("port", s->getRemotePort()));
                     jsonSend.insert(std::make_pair("content", content));
 
-                    std::vector<char> buf;
-                    s->encodeSendPacket(buf, jsonSend);
+                    std::vector<char> buf = s->encodeSendPacket(jsonSend);
 
                     std::lock_guard<jw::QuickMutex> g(_mutex);
                     (void)g;
@@ -171,8 +168,6 @@ namespace gs {
 
     typedef jw::BasicServer<ServerProxy, 128> Server;
 }
-
-#include "BasicRoom.hpp"
 
 #include <iostream>
 
