@@ -5,7 +5,7 @@
 
 namespace gs {
     struct ConnectedUser : jw::JsonPacketSplitter {
-        int64_t id;
+        int64_t id = 0;
         std::string name;
     };
 }
