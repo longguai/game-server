@@ -43,8 +43,6 @@ namespace gs {
             return true;
         }
 
-        //void deliver(const std::shared_ptr<_GameUser> &user, jw::cppJSON &json);
-
     protected:
         std::shared_ptr<_GameUser> _participants[_GameLogic::ParticipantCount];  // 参与玩家
         std::vector<std::shared_ptr<_GameUser> > _watchers;  // 旁观玩家
