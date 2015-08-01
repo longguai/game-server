@@ -75,6 +75,14 @@ namespace jw {
             }
         }
 
+        void deliver(const std::vector<char> &buf) {
+            deliver(&buf.at(0), buf.size());
+        }
+
+        void deliver(const std::string &str) {
+            deliver(str.c_str(), str.length());
+        }
+
     private:
         void _doRead() {
             auto thiz = shared_from_this();

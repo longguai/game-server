@@ -52,7 +52,7 @@ namespace jw {
             return std::move(buf);
         }
 
-        void encodeSendPacket(std::vector<char> &buf, const std::string &str) {
+        static void encodeSendPacket(std::vector<char> &buf, const std::string &str) {
             buf.clear();
             size_t sendLen = str.length();  // 包体长度
             buf.reserve(sendLen + 4);
@@ -63,7 +63,7 @@ namespace jw {
             std::copy(str.begin(), str.end(), std::back_inserter(buf));
         }
 
-        std::vector<char> encodeSendPacket(const std::string &str) {
+        static std::vector<char> encodeSendPacket(const std::string &str) {
             std::vector<char> buf;
             encodeSendPacket(buf, str);
             return buf;
@@ -88,13 +88,13 @@ namespace jw {
             return ret;
         }
 
-        void encodeSendPacket(std::vector<char> &buf, const jw::cppJSON &json) {
+        static void encodeSendPacket(std::vector<char> &buf, const jw::cppJSON &json) {
             std::string str = json.PrintUnformatted();
             LOG_DEBUG("%s", str.c_str());
             PacketSplitter::encodeSendPacket(buf, str);
         }
 
-        std::vector<char> encodeSendPacket(const jw::cppJSON &json) {
+        static std::vector<char> encodeSendPacket(const jw::cppJSON &json) {
             std::vector<char> buf;
             encodeSendPacket(buf, json);
             return buf;

@@ -15,15 +15,28 @@ namespace gs {
     template <class _GameTable, size_t _TableCount>
     class BasicRoom {
     public:
+        typedef _GameTable TableType;
         typedef typename _GameTable::UserType UserType;
+        static const size_t TableCount = _TableCount;
 
-    private:
+        //void deliver(const std::shared_ptr<UserType> &user, jw::cppJSON &json) { }
+
+        void addUser(const std::shared_ptr<UserType> &user) {
+            std::lock_guard<jw::QuickMutex> g(_mutex);
+            (void)g;
+            _userSet.insert(user);
+        }
+
+        void removeUser(const std::shared_ptr<UserType> &user) {
+            std::lock_guard<jw::QuickMutex> g(_mutex);
+            (void)g;
+            _userSet.erase(user);
+        }
+
+    protected:
         std::unordered_set<std::shared_ptr<UserType> > _userSet;
         _GameTable _table[_TableCount];
         jw::QuickMutex _mutex;
-
-    public:
-        void deliver(const std::shared_ptr<UserType> &user, jw::cppJSON &json) { }
     };
 }
 
