@@ -1,16 +1,16 @@
 ﻿/*
   Copyright (c) 2009 Dave Gamble
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
   in the Software without restriction, including without limitation the rights
   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
   copies of the Software, and to permit persons to whom the Software is
   furnished to do so, subject to the following conditions:
- 
+
   The above copyright notice and this permission notice shall be included in
   all copies or substantial portions of the Software.
- 
+
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,8 +20,8 @@
   THE SOFTWARE.
 */
 
-#ifndef __cppJSON__h__
-#define __cppJSON__h__
+#ifndef __CPP_JSON__H__
+#define __CPP_JSON__H__
 
 #include <stddef.h>  // for ptrdiff_t
 #include <stdint.h>  // for int64_t
@@ -1125,12 +1125,12 @@ namespace jw {
     }
 
     namespace __cpp_basic_json_impl {
-        template <class _JsonType, class _SourceType>
-        void AssignImpl<_JsonType, _SourceType>::invoke(_JsonType &c, _SourceType arg) {
-            // TODO:
-            //static_assert(0, "unimplemented type");
-        }
 
+        //
+        // Assign
+        //
+
+        // 相同类型
         template <class _JsonType> struct AssignImpl<_JsonType, _JsonType> {
             typedef _JsonType SourceType;
             static inline void invoke(_JsonType &c, const _JsonType &arg) {
@@ -1141,6 +1141,7 @@ namespace jw {
             }
         };
 
+        // nullptr
         template <class _JsonType> struct AssignImpl<_JsonType, std::nullptr_t> {
             typedef std::nullptr_t SourceType;
             static inline void invoke(_JsonType &c, SourceType) {
@@ -1148,6 +1149,7 @@ namespace jw {
             }
         };
 
+        // bool
         template <class _JsonType> struct AssignImpl<_JsonType, bool> {
             typedef bool SourceType;
             static inline void invoke(_JsonType &c, SourceType src) {
@@ -1155,6 +1157,7 @@ namespace jw {
             }
         };
 
+        // 整数实现
         template <class _JsonType, class _Integer> struct AssignFromIntegerImpl {
             typedef _Integer SourceType;
             static inline void invoke(_JsonType &c, SourceType arg) {
@@ -1163,6 +1166,7 @@ namespace jw {
             }
         };
 
+        // 整数
         template <class _JsonType> struct AssignImpl<_JsonType, char>
             : AssignFromIntegerImpl<_JsonType, char> { };
         template <class _JsonType> struct AssignImpl<_JsonType, signed char>
@@ -1186,6 +1190,7 @@ namespace jw {
         template <class _JsonType> struct AssignImpl<_JsonType, uint64_t>
             : AssignFromIntegerImpl<_JsonType, uint64_t> { };
 
+        // 浮点数实现
         template <class _JsonType, class _Float> struct AssignFromFloatImpl {
             typedef _Float SourceType;
             static inline void invoke(_JsonType &c, SourceType arg) {
@@ -1194,11 +1199,13 @@ namespace jw {
             }
         };
 
+        // 浮点数
         template <class _JsonType> struct AssignImpl<_JsonType, float>
             : AssignFromFloatImpl<_JsonType, float> { };
         template <class _JsonType> struct AssignImpl<_JsonType, double>
             : AssignFromFloatImpl<_JsonType, double> { };
 
+        // 不可移动的字符串实现
         template <class _JsonType, class _String, bool _Moveable> struct AssignFromStringImpl {
             typedef _String SourceType;
             static inline void invoke(_JsonType &c, const SourceType &arg) {
@@ -1207,6 +1214,7 @@ namespace jw {
             }
         };
 
+        // 可移动的字符串实现
         template <class _JsonType, class _String> struct AssignFromStringImpl<_JsonType, _String, true> {
             typedef _String SourceType;
             static inline void invoke(_JsonType &c, const SourceType &arg) {
@@ -1219,20 +1227,21 @@ namespace jw {
             }
         };
 
+        // C风格字符串
         template <class _JsonType, size_t _N> struct AssignImpl<_JsonType, char [_N]>
             : AssignFromStringImpl<_JsonType, char [_N], false> { };
-
         template <class _JsonType> struct AssignImpl<_JsonType, char *>
             : AssignFromStringImpl<_JsonType, char *, false> { };
-
         template <class _JsonType> struct AssignImpl<_JsonType, const char *>
             : AssignFromStringImpl<_JsonType, const char *, false> { };
 
+        // STL字符串
         template <class _JsonType, class _Traits, class _Alloc>
         struct AssignImpl<_JsonType, std::basic_string<char, _Traits, _Alloc> >
             : AssignFromStringImpl<_JsonType, std::basic_string<char, _Traits, _Alloc>,
             std::is_same<std::basic_string<char, _Traits, _Alloc>, typename _JsonType::StringType>::value> { };
 
+        // 数组类容器迭代器
         template <class _JsonType, class Iterator>
         void _AssignFromArrayHelper(_JsonType &c, Iterator first, Iterator last) {
             c._valueType = _JsonType::ValueType::Array;
@@ -1251,6 +1260,7 @@ namespace jw {
             }
         }
 
+        // 传统数组
         template <class _JsonType, class _Elem, size_t _N>
         struct AssignImpl<_JsonType, _Elem [_N]> {
             typedef _Elem SourceType[_N];
@@ -1262,6 +1272,7 @@ namespace jw {
             }
         };
 
+        // 数组类容器实现
         template <class _JsonType, class _Array>
         struct AssignFromArrayImpl {
             typedef _Array SourceType;
@@ -1273,6 +1284,7 @@ namespace jw {
             }
         };
 
+        // 数组类容器
         template <class _JsonType, class _T, class _Alloc>
         struct AssignImpl<_JsonType, std::vector<_T, _Alloc> >
             : AssignFromArrayImpl<_JsonType, std::vector<_T, _Alloc> > { };
@@ -1297,6 +1309,7 @@ namespace jw {
         struct AssignImpl<_JsonType, std::unordered_multiset<_T, _Hash, _Pred, _Alloc> >
             : AssignFromArrayImpl<_JsonType, std::unordered_multiset<_T, _Hash, _Pred, _Alloc> > { };
 
+        // 键值对类容器迭代器
         template <class _JsonType, class Iterator>
         void _AssignFromMapHelper(_JsonType &c, Iterator first, Iterator last) {
             c._valueType = _JsonType::ValueType::Object;
@@ -1316,6 +1329,7 @@ namespace jw {
             }
         }
 
+        // 键值对类容器实现
         template <class _JsonType, class _Map>
         struct AssignFromMapImpl {
             typedef _Map SourceType;
@@ -1330,6 +1344,7 @@ namespace jw {
             }
         };
 
+        // 键值对类容器
         template <class _JsonType, class _Key, class _Val, class _Compare, class _Alloc>
         struct AssignImpl<_JsonType, std::map<_Key, _Val, _Compare, _Alloc> >
             : AssignFromMapImpl<_JsonType, std::map<_Key, _Val, _Compare, _Alloc> > { };
@@ -1346,6 +1361,7 @@ namespace jw {
         struct AssignImpl<_JsonType, std::unordered_multimap<_Key, _Val, _Hash, _Pred, _Alloc> >
             : AssignFromMapImpl<_JsonType, std::unordered_multimap<_Key, _Val, _Hash, _Pred, _Alloc> > { };
 
+        // C++11初始化列表
         template <class _JsonType, class _T>
         struct AssignImpl<_JsonType, std::initializer_list<_T> > {
             typedef std::initializer_list<_T> SourceType;
@@ -1354,26 +1370,19 @@ namespace jw {
             }
         };
 
-        template <class _JsonType, class _TargetType>
-        _TargetType AsImpl<_JsonType, _TargetType>::invoke(const _JsonType &c) {
-            std::basic_stringstream<char, typename _JsonType::StringType::traits_type, typename _JsonType::StringType::allocator_type> ss;
-            switch (c._valueType) {
-            case _JsonType::ValueType::Null: break;
-            case _JsonType::ValueType::False: ss << 0; break;
-            case _JsonType::ValueType::True: ss << 1; break;
-            case _JsonType::ValueType::Integer: ss << c._valueInt; break;
-            case _JsonType::ValueType::Float: ss << c._valueFloat; break;
-            case _JsonType::ValueType::String: ss << c._valueString; break;
-            case _JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to target type"); break;
-            case _JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to target type"); break;
-            default: throw std::out_of_range("JSON type out of range"); break;
-            }
-            TargetType ret = TargetType();
-            // TODO：
-            //ss >> ret;
-            return ret;
+        // 其他未特化的
+        template <class _JsonType, class _SourceType>
+        void AssignImpl<_JsonType, _SourceType>::invoke(_JsonType &c, _SourceType arg) {
+            // 这里对枚举可以编译通过，对其他未特化的类型则报编译错误
+            static_assert(std::is_enum<_SourceType>::value, "unimplemented type");
+            AssignFromIntegerImpl<_JsonType, int64_t>::invoke(c, static_cast<int64_t>(arg));
         }
 
+        //
+        // AS
+        //
+
+        // AS成自己的指针
         template <class _JsonType>
         struct AsImpl<_JsonType, const _JsonType *> {
             typedef const _JsonType *TargetType;
@@ -1382,6 +1391,7 @@ namespace jw {
             }
         };
 
+        // AS成自己的常引用
         template <class _JsonType>
         struct AsImpl<_JsonType, const _JsonType &> {
             typedef const _JsonType &TargetType;
@@ -1390,6 +1400,7 @@ namespace jw {
             }
         };
 
+        // AS成整数实现
         template <class _JsonType, class _Integer>
         struct AsIntegerImpl {
             typedef _Integer TargetType;
@@ -1408,39 +1419,31 @@ namespace jw {
             }
         };
 
+        // AS成整数
         template <class _JsonType> struct AsImpl<_JsonType, char>
             : AsIntegerImpl<_JsonType, char> { };
-
         template <class _JsonType> struct AsImpl<_JsonType, signed char>
             : AsIntegerImpl<_JsonType, signed char> { };
-
         template <class _JsonType> struct AsImpl<_JsonType, unsigned char>
             : AsIntegerImpl<_JsonType, unsigned char> { };
-
         template <class _JsonType> struct AsImpl<_JsonType, short>
             : AsIntegerImpl<_JsonType, short> { };
-
         template <class _JsonType> struct AsImpl<_JsonType, unsigned short>
             : AsIntegerImpl<_JsonType, unsigned short> { };
-
         template <class _JsonType> struct AsImpl<_JsonType, int>
             : AsIntegerImpl<_JsonType, int> { };
-
         template <class _JsonType> struct AsImpl<_JsonType, unsigned>
             : AsIntegerImpl<_JsonType, unsigned> { };
-
         template <class _JsonType> struct AsImpl<_JsonType, long>
             : AsIntegerImpl<_JsonType, long> { };
-
         template <class _JsonType> struct AsImpl<_JsonType, unsigned long>
             : AsIntegerImpl<_JsonType, unsigned long> { };
-
         template <class _JsonType> struct AsImpl<_JsonType, int64_t>
             : AsIntegerImpl<_JsonType, int64_t> { };
-
         template <class _JsonType> struct AsImpl<_JsonType, uint64_t>
             : AsIntegerImpl<_JsonType, uint64_t> { };
 
+        // AS成浮点数实现
         template <class _JsonType, class _Float> struct AsFloatImpl {
             typedef _Float TargetType;
             static TargetType invoke(const _JsonType &c) {
@@ -1458,11 +1461,13 @@ namespace jw {
             }
         };
 
+        // AS成浮点数
         template <class _JsonType> struct AsImpl<_JsonType, float>
             : AsFloatImpl<_JsonType, float> { };
         template <class _JsonType> struct AsImpl<_JsonType, double>
             : AsFloatImpl<_JsonType, double> { };
 
+        // AS成STL字符串实现
         template <class _JsonType, class _String> struct AsStringImpl {
             typedef _String TargetType;
             static TargetType invoke(const _JsonType &c) {
@@ -1488,10 +1493,12 @@ namespace jw {
             }
         };
 
+        // AS成STL字符串
         template <class _JsonType, class _Char, class _Traits, class _Alloc>
         struct AsImpl<_JsonType, std::basic_string<_Char, _Traits, _Alloc> >
             : AsStringImpl<_JsonType, std::basic_string<_Char, _Traits, _Alloc> > { };
 
+        // AS成数组类容器实现
         template <class _JsonType, class _Array> struct AsArrayImpl {
             typedef _Array TargetType;
             static TargetType invoke(const _JsonType &c) {
@@ -1514,6 +1521,7 @@ namespace jw {
             }
         };
 
+        // AS成数组类容器
         template <class _JsonType, class _T, class _Alloc>
         struct AsImpl<_JsonType, std::vector<_T, _Alloc> >
             : AsArrayImpl<_JsonType, std::vector<_T, _Alloc> > { };
@@ -1538,6 +1546,7 @@ namespace jw {
         struct AsImpl<_JsonType, std::unordered_multiset<_T, _Hash, _Pred, _Alloc> >
             : AsArrayImpl<_JsonType, std::unordered_multiset<_T, _Hash, _Pred, _Alloc> > { };
 
+        // AS成键值对类容器实现
         template <class _JsonType, class _Map> struct AsMapImpl {
             typedef _Map TargetType;
             static TargetType invoke(const _JsonType &c) {
@@ -1565,6 +1574,7 @@ namespace jw {
             }
         };
 
+        // AS成键值对类容器
         template <class _JsonType, class _String, class _Val, class _Compare, class _Alloc>
         struct AsImpl<_JsonType, std::map<_String, _Val, _Compare, _Alloc> >
             : AsMapImpl<_JsonType, std::map<_String, _Val, _Compare, _Alloc> > { };
@@ -1580,6 +1590,27 @@ namespace jw {
         template <class _JsonType, class _String, class _Val, class _Hash, class _Pred, class _Alloc>
         struct AsImpl<_JsonType, std::unordered_multimap<_String, _Val, _Hash, _Pred, _Alloc> >
             : AsMapImpl<_JsonType, std::unordered_multimap<_String, _Val, _Hash, _Pred, _Alloc> > { };
+
+        // 其他未特化的
+        template <class _JsonType, class _TargetType>
+        _TargetType AsImpl<_JsonType, _TargetType>::invoke(const _JsonType &c) {
+            std::basic_stringstream<char, typename _JsonType::StringType::traits_type, typename _JsonType::StringType::allocator_type> ss;
+            switch (c._valueType) {
+            case _JsonType::ValueType::Null: break;
+            case _JsonType::ValueType::False: ss << 0; break;
+            case _JsonType::ValueType::True: ss << 1; break;
+            case _JsonType::ValueType::Integer: ss << c._valueInt; break;
+            case _JsonType::ValueType::Float: ss << c._valueFloat; break;
+            case _JsonType::ValueType::String: ss << c._valueString; break;
+            case _JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to target type"); break;
+            case _JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to target type"); break;
+            default: throw std::out_of_range("JSON type out of range"); break;
+            }
+            TargetType ret = TargetType();
+            // TODO：
+            //ss >> ret;
+            return ret;
+        }
     }
 
     typedef BasicJSON<int64_t, double, std::char_traits<char>, std::allocator<char> > cppJSON;
