@@ -632,7 +632,13 @@ namespace jw {
                 Delete(item);
                 throw std::logic_error("Item already added. It can't be added again");
             }
-            item->_key = __cpp_basic_json_impl::_FixString(val.first);
+            const char *key = __cpp_basic_json_impl::_FixString(val.first);;
+            if (_DoFind(key) != nullptr) {
+                char err[256];
+                snprintf(err, 255, "Key: [%s] is already used.", key);
+                throw std::logic_error(err);
+            }
+            item->_key = key;
             pointer ptr = _child;  // 直接插入到末尾
             ptr->_prev->_next = item;  // 连接ptr的前驱和item
             item->_prev = ptr->_prev;
