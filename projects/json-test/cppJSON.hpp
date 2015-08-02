@@ -797,6 +797,7 @@ namespace jw {
                 _valueFloat = static_cast<_Float>(n);
                 _valueType = ValueType::Float;
             } else {
+                ll *= sign;
 				if (std::numeric_limits<_Integer>::min() <= ll && ll <= std::numeric_limits<_Integer>::max()) {
 					_valueInt = static_cast<_Integer>(ll); _valueType = ValueType::Integer;
 				} else {
