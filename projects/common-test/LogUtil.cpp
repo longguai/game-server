@@ -3,7 +3,10 @@
 #include <crtdbg.h>
 #include <stdio.h>
 #include <time.h>
+#include <codecvt>
 #include "QuickMutex.h"
+
+#define STRING_IS_UTF8 1
 
 namespace jw {
     QuickMutex g_lock;
@@ -36,8 +39,20 @@ namespace jw {
             puts(buf);
         }
         fflush(stdout);
+
+#if STRING_IS_UTF8
+        try {
+            std::wstring_convert<std::codecvt_utf8<wchar_t> > cvt;
+            std::wstring wstr = cvt.from_bytes(buf);
+            wstr.append(1, L'\n');
+            ::OutputDebugStringW(wstr.c_str());
+        }
+        catch (std::exception &) {
+        }
+#else
         ::OutputDebugStringA(buf);
         ::OutputDebugStringA("\n");
+#endif
     }
 
     void LogVerbose(const char *format, ...) {
