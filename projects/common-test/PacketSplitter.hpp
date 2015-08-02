@@ -89,9 +89,15 @@ namespace jw {
         }
 
         static void encodeSendPacket(std::vector<char> &buf, const jw::cppJSON &json) {
-            std::string str = json.PrintUnformatted();
-            LOG_DEBUG("%s", str.c_str());
-            PacketSplitter::encodeSendPacket(buf, str);
+            buf.resize(4);
+            json.PrintTo(buf, false);
+
+            size_t sendLen = buf.size() - 4;  // 包体长度
+            LOG_DEBUG("%.*s", (int)sendLen, &buf[4]);
+            buf[0] = ((sendLen >> 0) & 0xFF);
+            buf[1] = ((sendLen >> 8) & 0xFF);
+            buf[2] = ((sendLen >> 16) & 0xFF);
+            buf[3] = ((sendLen >> 24) & 0xFF);
         }
 
         static std::vector<char> encodeSendPacket(const jw::cppJSON &json) {
