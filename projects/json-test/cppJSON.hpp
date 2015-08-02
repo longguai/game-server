@@ -408,21 +408,21 @@ namespace jw {
 
         typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-        iterator begin() { return iterator(_child->_next); }
-        const_iterator begin() const { return const_iterator(_child->_next); }
-        const_iterator cbegin() const { return const_iterator(_child->_next); }
+        inline iterator begin() { return iterator(_child->_next); }
+        inline const_iterator begin() const { return const_iterator(_child->_next); }
+        inline const_iterator cbegin() const { return const_iterator(_child->_next); }
 
-        iterator end() { return iterator(_child); }
-        const_iterator end() const { return const_iterator(_child); }
-        const_iterator cend() const { return const_iterator(_child); }
+        inline iterator end() { return iterator(_child); }
+        inline const_iterator end() const { return const_iterator(_child); }
+        inline const_iterator cend() const { return const_iterator(_child); }
 
-        reverse_iterator rbegin() { return reverse_iterator(_child); }
-        const_reverse_iterator rbegin() const { return const_reverse_iterator(_child); }
-        const_reverse_iterator crbegin() const { return const_reverse_iterator(_child); }
+        inline reverse_iterator rbegin() { return reverse_iterator(_child); }
+        inline const_reverse_iterator rbegin() const { return const_reverse_iterator(_child); }
+        inline const_reverse_iterator crbegin() const { return const_reverse_iterator(_child); }
 
-        reverse_iterator rend() { return reverse_iterator(_child->_next); }
-        const_reverse_iterator rend() const { return const_reverse_iterator(_child->_next); }
-        const_reverse_iterator crend() const { return const_reverse_iterator(_child->_next); }
+        inline reverse_iterator rend() { return reverse_iterator(_child->_next); }
+        inline const_reverse_iterator rend() const { return const_reverse_iterator(_child->_next); }
+        inline const_reverse_iterator crend() const { return const_reverse_iterator(_child->_next); }
 
         template <class _T> iterator insert(const_iterator where, _T &&val) {
             if (_valueType != ValueType::Array) {
