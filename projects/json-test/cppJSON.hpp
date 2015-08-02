@@ -927,6 +927,7 @@ namespace jw {
                 ret.push_back(*str++);
             }
         }
+
         template <class _CharSequence>
         static inline void _AppendString(_CharSequence &ret, size_t n, char ch) {
             while (n-- > 0) {
@@ -1085,7 +1086,7 @@ namespace jw {
         }
 
         template <class _CharContainer>
-        inline void PrintTo(_CharContainer &container, bool format) {
+        inline void PrintTo(_CharContainer &container, bool format) const {
             print_value(container, 0, format);
         }
 
