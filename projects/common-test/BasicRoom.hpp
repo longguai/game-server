@@ -13,7 +13,7 @@ namespace gs {
         typedef typename _GameTable::UserType UserType;
         static const size_t TableCount = _TableCount;
 
-        //void deliver(const std::shared_ptr<UserType> &user, jw::cppJSON &json) { }
+        //void deliver(const std::shared_ptr<UserType> &user, const jw::cppJSON &json) { }
 
         //void addUser(const std::shared_ptr<UserType> &user) {
         //    std::lock_guard<jw::QuickMutex> g(_mutex);
