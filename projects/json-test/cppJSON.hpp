@@ -921,11 +921,24 @@ namespace jw {
             ep = value; return nullptr; // malformed.
         }
 
-        template <class _String> void print_value(_String &ret, int depth, bool fmt) const {
+        template <class _CharSequence>
+        static inline void _AppendString(_CharSequence &ret, const char *str) {
+            while (*str != '\0') {
+                ret.push_back(*str++);
+            }
+        }
+        template <class _CharSequence>
+        static inline void _AppendString(_CharSequence &ret, size_t n, char ch) {
+            while (n-- > 0) {
+                ret.push_back(ch);
+            }
+        }
+
+        template <class _CharSequence> void print_value(_CharSequence &ret, int depth, bool fmt) const {
             switch (_valueType) {
-            case ValueType::Null: ret.append("null"); break;
-            case ValueType::False: ret.append("false"); break;
-            case ValueType::True: ret.append("true"); break;
+            case ValueType::Null: _AppendString(ret, "null"); break;
+            case ValueType::False: _AppendString(ret, "false"); break;
+            case ValueType::True: _AppendString(ret, "true"); break;
             case ValueType::Integer: print_integer(ret); break;
             case ValueType::Float: print_float(ret); break;
             case ValueType::String: print_string(ret); break;
@@ -935,22 +948,22 @@ namespace jw {
             }
         }
 
-        template <class _String> void print_integer(_String &ret) const {
+        template <class _CharSequence> void print_integer(_CharSequence &ret) const {
             char str[21];  // 2^64+1 can be represented in 21 chars.
             snprintf(str, 21, "%" PRId64, (int64_t)_valueInt);
-            ret.append(str);
+            _AppendString(ret, str);
         }
 
-        template <class _String> void print_float(_String &ret) const {
+        template <class _CharSequence> void print_float(_CharSequence &ret) const {
             char str[64];  // This is a nice tradeoff.
             double d = static_cast<double>(_valueFloat);
             if (fabs(floor(d) - d) <= std::numeric_limits<double>::epsilon() && fabs(d) < 1.0e60) snprintf(str, 64, "%.0f", d);
             else if (fabs(d) < 1.0e-6 || fabs(d) > 1.0e9) snprintf(str, 64, "%e", d);
             else snprintf(str, 64, "%f", d);
-            ret.append(str);
+            _AppendString(ret, str);
         }
 
-        template <class _String> static void print_string_ptr(_String &ret, const StringType &str) {
+        template <class _CharSequence> static void print_string_ptr(_CharSequence &ret, const StringType &str) {
             if (str.empty()) return;
 
             const char *ptr; int len = 0; unsigned char token;
@@ -958,76 +971,76 @@ namespace jw {
 
             ret.reserve(ret.size() + len + 3);
             ptr = str.c_str();
-            ret.append(1, '\"');
+            ret.push_back('\"');
             while (*ptr) {
-                if ((unsigned char)*ptr > 31 && *ptr != '\"' && *ptr != '\\') ret.append(1, *ptr++);
+                if ((unsigned char)*ptr > 31 && *ptr != '\"' && *ptr != '\\') ret.push_back(*ptr++);
                 else {
-                    ret.append(1, '\\');
+                    ret.push_back('\\');
                     switch (token = *ptr++) {
-                    case '\\':  ret.append(1, '\\'); break;
-                    case '\"':  ret.append(1, '\"'); break;
-                    case '\b':  ret.append(1, 'b'); break;
-                    case '\f':  ret.append(1, 'f'); break;
-                    case '\n':  ret.append(1, 'n'); break;
-                    case '\r':  ret.append(1, 'r'); break;
-                    case '\t':  ret.append(1, 't'); break;
-                    default: { char ptr2[8]; snprintf(ptr2, 8, "u%04x", token); ret.append(ptr2); } break;  // escape and print
+                    case '\\':  ret.push_back('\\'); break;
+                    case '\"':  ret.push_back('\"'); break;
+                    case '\b':  ret.push_back('b'); break;
+                    case '\f':  ret.push_back('f'); break;
+                    case '\n':  ret.push_back('n'); break;
+                    case '\r':  ret.push_back('r'); break;
+                    case '\t':  ret.push_back('t'); break;
+                    default: { char ptr2[8]; snprintf(ptr2, 8, "u%04x", token); _AppendString(ret, ptr2); } break;  // escape and print
                     }
                 }
             }
-            ret.append(1, '\"');
+            ret.push_back('\"');
         }
 
-        template <class _String> void print_string(_String &ret) const {
+        template <class _CharSequence> void print_string(_CharSequence &ret) const {
             print_string_ptr(ret, _valueString);
         }
 
-        template <class _String> void print_array(_String &ret, int depth, bool fmt) const {
+        template <class _CharSequence> void print_array(_CharSequence &ret, int depth, bool fmt) const {
             size_t numentries = static_cast<size_t>(_child->_valueInt);
 
             // Explicitly handle empty object case
             if (_child->_valueInt == 0) {
-                ret.append("[]");
+                _AppendString(ret, "[]");
                 return;
             }
 
             // Retrieve all the results:
             pointer child = _child;
             size_t i = 0;
-            ret.append("[");
+            ret.push_back('[');
             for (child = _child->_next; child != _child; child = child->_next, ++i) {
                 child->print_value(ret, depth + 1, fmt);
-                if (i != numentries - 1) { ret.append(1, ','); if (fmt) ret.append(1, ' '); }
+                if (i != numentries - 1) { ret.push_back(','); if (fmt) ret.push_back(' '); }
             }
-            ret.append("]");
+            ret.push_back(']');
         }
 
-        template <class _String> void print_object(_String &ret, int depth, bool fmt) const {
+        template <class _CharSequence> void print_object(_CharSequence &ret, int depth, bool fmt) const {
             size_t numentries = static_cast<size_t>(_child->_valueInt);
 
             // Explicitly handle empty object case
             if (numentries == 0) {
-                ret.append(1, '{');
-                if (fmt) { ret.append(1, '\n'); if (depth > 0) ret.append(depth - 1, '\t'); }
-                ret.append(1, '}');
+                ret.push_back('{');
+                if (fmt) { ret.push_back('\n'); if (depth > 0) _AppendString(ret, depth - 1, '\t'); }
+                ret.push_back('}');
                 return;
             }
 
             // Compose the output:
             pointer child = _child->_next;
             ++depth;
-            ret.append(1, '{'); if (fmt) ret.append(1, '\n');
+            ret.push_back('{'); if (fmt) ret.push_back('\n');
             for (size_t i = 0; i < numentries; ++i) {
-                if (fmt) ret.append(depth, '\t');
+                if (fmt) _AppendString(ret, depth, '\t');
                 print_string_ptr(ret, child->_key);
-                ret.append(1, ':'); if (fmt) ret.append(1, '\t');
+                ret.push_back(':'); if (fmt) ret.push_back('\t');
                 child->print_value(ret, depth, fmt);
-                if (i != numentries - 1) ret.append(1, ',');
-                if (fmt) ret.append(1, '\n');
+                if (i != numentries - 1) ret.push_back(',');
+                if (fmt) ret.push_back('\n');
                 child = child->_next;
             }
-            if (fmt) ret.append(depth - 1, '\t');
-            ret.append(1, '}');
+            if (fmt) _AppendString(ret, depth - 1, '\t');
+            ret.push_back('}');
         }
 
         static bool Duplicate(reference newitem, const_reference item, bool recurse) {
@@ -1069,6 +1082,11 @@ namespace jw {
             std::string ret;
             print_value(ret, 0, false);
             return ret;
+        }
+
+        template <class _CharContainer>
+        inline void PrintTo(_CharContainer &container, bool format) {
+            print_value(container, 0, format);
         }
 
         static void Minify(char *json) {
