@@ -13,8 +13,8 @@ namespace jw {
 
     class TimerEngine {
     public:
-        TimerEngine();
-        ~TimerEngine();
+        static TimerEngine *getInstance();
+        static void destroyInstance();
 
         static const uint32_t REPEAT_FOREVER = UINT32_MAX;
 
@@ -24,6 +24,9 @@ namespace jw {
         bool unregisterTimer(uintptr_t timerId);
 
     private:
+        TimerEngine();
+        ~TimerEngine();
+
         template <class _Function>
         uintptr_t _RegisterTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, _Function &&callback);
 

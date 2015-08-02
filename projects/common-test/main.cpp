@@ -86,13 +86,14 @@ int main() {
     getchar();
     return 0;
 
-    jw::TimerEngine te;
-    te.registerTimer(1, std::chrono::milliseconds(1000), jw::TimerEngine::REPEAT_FOREVER, [&te](int64_t dt) {
+    auto te = jw::TimerEngine::getInstance();
+    te->registerTimer(1, std::chrono::milliseconds(1000), jw::TimerEngine::REPEAT_FOREVER, [&te](int64_t dt) {
         LOG_INFO("timer dt = %I64d", dt);
-        te.unregisterTimer(1);
-        te.registerTimer(2, std::chrono::milliseconds(500), 20, [](int64_t dt) { LOG_INFO("dt = %I64d", dt); });
+        te->unregisterTimer(1);
+        te->registerTimer(2, std::chrono::milliseconds(500), 20, [](int64_t dt) { LOG_INFO("dt = %I64d", dt); });
     });
     getchar();
+    jw::TimerEngine::destroyInstance();
 
     return 0;
 

@@ -12,6 +12,21 @@ namespace jw {
         std::function<void (int64_t)> callback;
     };
 
+    static TimerEngine *s_SharedEngine = nullptr;
+    TimerEngine *TimerEngine::getInstance() {
+        if (s_SharedEngine == nullptr) {
+            s_SharedEngine = new (std::nothrow) TimerEngine();
+        }
+        return s_SharedEngine;
+    }
+
+    void TimerEngine::destroyInstance() {
+        if (s_SharedEngine != nullptr) {
+            delete s_SharedEngine;
+            s_SharedEngine = nullptr;
+        }
+    }
+
     TimerEngine::TimerEngine() {
         _shouldQuit = false;
         _changedInTimeThread = false;
