@@ -496,6 +496,22 @@ namespace jw {
             }
         }
 
+        template <class _T>
+        inline void push_back(_T &&val) {
+            if (_valueType != ValueType::Array) {
+                throw std::logic_error("Only Array support push_back!");
+            }
+            _DoInsertForArray(_child, std::forward<_T>(val));
+        }
+
+        template <class _T>
+        inline void push_front(_T &&val) {
+            if (_valueType != ValueType::Array) {
+                throw std::logic_error("Only Array support push_front!");
+            }
+            _DoInsertForArray(_child->_next, std::forward<_T>(val));
+        }
+
         iterator erase(const_iterator where) {
             if (_valueType != ValueType::Array && _valueType != ValueType::Object) {
                 throw std::logic_error("Only Array and Object support erase!");
@@ -509,6 +525,20 @@ namespace jw {
 
         iterator inline erase(iterator where) {
             return erase(const_iterator(where._ptr));
+        }
+
+        inline void pop_back() {
+            if (_valueType != ValueType::Array) {
+                throw std::logic_error("Only Array support pop_back!");
+            }
+            _DoErase(_child->_prev);
+        }
+
+        inline void pop_front() {
+            if (_valueType != ValueType::Array) {
+                throw std::logic_error("Only Array support pop_front!");
+            }
+            _DoErase(_child->_next);
         }
 
         template <class _String> inline IntegerType erase(const _String &key) {
