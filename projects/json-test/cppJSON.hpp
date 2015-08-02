@@ -301,14 +301,14 @@ namespace jw {
 
         bool empty() const {
             if (_valueType != ValueType::Array && _valueType != ValueType::Object) {
-                throw std::logic_error("Only Array and Object support!");
+                throw std::logic_error("Only Array and Object support function empty!");
             }
             return (_child->_next == _child);
         }
 
         typename std::make_unsigned<IntegerType>::type size() const {
             if (_valueType != ValueType::Array && _valueType != ValueType::Object) {
-                throw std::logic_error("Only Array and Object support!");
+                throw std::logic_error("Only Array and Object support function size!");
             }
             return static_cast<typename std::make_unsigned<IntegerType>::type>(_child->_valueInt);
         }
@@ -426,7 +426,7 @@ namespace jw {
 
         template <class _T> iterator insert(const_iterator where, _T &&val) {
             if (_valueType != ValueType::Array) {
-                throw std::logic_error("Only Array support!");
+                throw std::logic_error("Only Array support insert with position specified by iterator!");
             }
             pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
@@ -441,7 +441,7 @@ namespace jw {
 
         template <class _T> iterator insert(const_iterator where, size_t n, const _T &val) {
             if (_valueType != ValueType::Array) {
-                throw std::logic_error("Only Array support!");
+                throw std::logic_error("Only Array support with position specified by iterator!");
             }
             pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
@@ -456,7 +456,7 @@ namespace jw {
 
         template <class _InputIterator> iterator insert(const_iterator where, _InputIterator first, _InputIterator last) {
             if (_valueType != ValueType::Array) {
-                throw std::logic_error("Only Array support!");
+                throw std::logic_error("Only Array support with position specified by iterator!");
             }
             pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
@@ -477,7 +477,7 @@ namespace jw {
 
         template <class _T> iterator insert(const_iterator where, std::initializer_list<_T> il) {
             if (_valueType != ValueType::Array) {
-                throw std::logic_error("Only Array support!");
+                throw std::logic_error("Only Array support with position specified by iterator!");
             }
             pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
@@ -498,7 +498,7 @@ namespace jw {
 
         iterator erase(const_iterator where) {
             if (_valueType != ValueType::Array && _valueType != ValueType::Object) {
-                throw std::logic_error("Only Array and Object support!");
+                throw std::logic_error("Only Array and Object support erase!");
             }
             pointer ptr = where._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
@@ -513,7 +513,7 @@ namespace jw {
 
         template <class _String> inline IntegerType erase(const _String &key) {
             if (_valueType != ValueType::Object) {
-                throw std::logic_error("Only Object support!");
+                throw std::logic_error("Only Object support erase by key!");
             }
             pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
             if (ptr != nullptr) {
@@ -525,7 +525,7 @@ namespace jw {
 
         iterator erase(const_iterator first, const_iterator last) {
             if (_valueType != ValueType::Array && _valueType != ValueType::Object) {
-                throw std::logic_error("Only Array and Object support!");
+                throw std::logic_error("Only Array and Object support erase by iterators!");
             }
             pointer ptr = first._ptr;
 #if (defined _DEBUG) || (defined DEBUG)
@@ -542,7 +542,7 @@ namespace jw {
 
         template <class _String> inline iterator find(const _String &key) {
             if (_valueType != ValueType::Object) {
-                throw std::logic_error("Only Object support!");
+                throw std::logic_error("Only Object support find by key!");
             }
             pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
             return ptr != nullptr ? iterator(ptr) : end();
@@ -550,7 +550,7 @@ namespace jw {
 
         template <class _String> inline const_iterator find(const _String &key) const {
             if (_valueType != ValueType::Object) {
-                throw std::logic_error("Only Object support!");
+                throw std::logic_error("Only Object support find by key!");
             }
             pointer ptr = _DoFind(__cpp_basic_json_impl::_FixString(key));
             return ptr != nullptr ? const_iterator(ptr) : end();
@@ -558,13 +558,13 @@ namespace jw {
 
         template <class _T, class _String> inline _T findAs(const _String &key) const {
             if (_valueType != ValueType::Object) {
-                throw std::logic_error("Only Object support!");
+                throw std::logic_error("Only Object support find by key!");
             }
             const char *str = __cpp_basic_json_impl::_FixString(key);
             pointer ptr = _DoFind(str);
             if (ptr == nullptr) {
-                char err[128];
-                snprintf(err, 128, "Cannot find value for key = %s", str);
+                char err[256];
+                snprintf(err, 255, "Cannot find value for key: [%s]", str);
                 throw std::logic_error(err);
             }
             return ptr->as<_T>();
@@ -608,7 +608,7 @@ namespace jw {
                 typename std::remove_cv<typename std::remove_reference<_T>::type>::type>::invoke(*item, std::forward<_T>(val));
             if (_child->_next != _child && _child->_next->_valueType != item->_valueType) {
                 Delete(item);
-                throw std::logic_error("Cannot insert a difference value type to an Array");
+                throw std::logic_error("Cannot insert a difference type into an Array.");
             }
             if (item->_prev != nullptr || item->_next != nullptr) {
                 Delete(item);
@@ -661,7 +661,7 @@ namespace jw {
 
         pointer _DoFind(const char *key) const {
             if (_valueType != ValueType::Object) {
-                throw std::logic_error("Only Object support!");
+                throw std::logic_error("Only Object support find by key!");
             }
             if (key == nullptr || *key == '\0') return nullptr;
             for (const_iterator it = begin(); it != end(); ++it) {
