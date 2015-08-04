@@ -38,7 +38,7 @@ namespace gs {
                         return;
                     }
 
-                    std::string content = jsonRecv.findAs<std::string>("content");
+                    std::string content = jsonRecv.getValueByKey<std::string>("content");
 
                     jw::cppJSON jsonSend(jw::cppJSON::ValueType::Object);
                     jsonSend.insert(std::make_pair("ip", s->getRemoteIP()));
