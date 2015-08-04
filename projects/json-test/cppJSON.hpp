@@ -169,6 +169,7 @@ namespace jw {
         ~BasicJSON<_Integer, _Float, _Traits, _Alloc>() { clear(); }
 
         ValueType getValueType() const { return _valueType; }
+        const StringType &key() const { return _key; }
 
         inline bool Parse(const char *src) { return ParseWithOpts(src, nullptr, false); }
 
@@ -965,7 +966,11 @@ namespace jw {
         }
 
         template <class _CharSequence> static void print_string_ptr(_CharSequence &ret, const StringType &str) {
-            if (str.empty()) return;
+            if (str.empty()) {
+                ret.push_back('\"');
+                ret.push_back('\"');
+                return;
+            }
 
             const char *ptr; int len = 0; unsigned char token;
             ptr = str.c_str(); while ((token = *ptr) && ++len) { if (strchr("\"\\\b\f\n\r\t", token)) ++len; else if (token < 32) len += 5; ++ptr; }
