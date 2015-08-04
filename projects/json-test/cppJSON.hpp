@@ -572,6 +572,10 @@ namespace jw {
         }
 
         template <class _String> inline iterator find(const _String &key) {
+            typedef typename std::conditional<std::is_array<_String>::value,
+                const typename std::remove_extent<_String>::type *,
+                typename std::remove_cv<_String>::type>::type FixedCStringType;
+            static_assert(std::is_convertible<const char *, FixedCStringType>::value, "key_type must be able to convert to const char *");
             if (_valueType != ValueType::Object) {
                 throw std::logic_error("Only Object support find by key!");
             }
@@ -580,6 +584,10 @@ namespace jw {
         }
 
         template <class _String> inline const_iterator find(const _String &key) const {
+            typedef typename std::conditional<std::is_array<_String>::value,
+                const typename std::remove_extent<_String>::type *,
+                typename std::remove_cv<_String>::type>::type FixedCStringType;
+            static_assert(std::is_convertible<const char *, FixedCStringType>::value, "key_type must be able to convert to const char *");
             if (_valueType != ValueType::Object) {
                 throw std::logic_error("Only Object support find by key!");
             }
@@ -587,7 +595,11 @@ namespace jw {
             return ptr != nullptr ? const_iterator(ptr) : end();
         }
 
-        template <class _T, class _String> inline _T findAs(const _String &key) const {
+        template <class _T, class _String> inline _T getValueByKey(const _String &key) const {
+            typedef typename std::conditional<std::is_array<_String>::value,
+                const typename std::remove_extent<_String>::type *,
+                typename std::remove_cv<_String>::type>::type FixedCStringType;
+            static_assert(std::is_convertible<const char *, FixedCStringType>::value, "key_type must be able to convert to const char *");
             if (_valueType != ValueType::Object) {
                 throw std::logic_error("Only Object support find by key!");
             }
@@ -599,6 +611,15 @@ namespace jw {
                 throw std::logic_error(err);
             }
             return ptr->as<_T>();
+        }
+
+        template <class _T, class _String> inline _T getValueByKeyNoThrow(const _String &key) const {
+            try {
+                return getValueByKey<_T, _String>(key);
+            }
+            catch (...) {
+                return _T();
+            }
         }
 
         template <class, class> friend struct __cpp_basic_json_impl::AssignImpl;

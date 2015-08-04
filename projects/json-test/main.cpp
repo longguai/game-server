@@ -210,6 +210,14 @@ inline bool operator!=(const TestAllocator<_T> &left, const TestAllocator<_Other
 #include <functional>
 #include <stdbool.h>
 
+enum E1 {
+    E1_Value
+};
+
+enum class E2 {
+    E2_Value
+};
+
 int main(int argc, char *argv[])
 {
 #if (defined _DEBUG) || (defined DEBUG)
@@ -426,13 +434,40 @@ int main(int argc, char *argv[])
         }
         std::cout << js << std::endl;
         js.insert({std::make_pair(std::string("abc"), 123), std::make_pair(std::string("def"), 456)});
+        js.insert(std::make_pair("123", E1_Value));
+        js.insert(std::make_pair("45", E2::E2_Value));
         std::cout << js << std::endl;
+        
 
         auto it = js.find("abc");
         if (it != js.end()) {
             std::cout << it->as<double>() << std::endl;
         }
-        std::cout << js.findAs<int>("def") << std::endl;
+        std::cout << js.getValueByKey<int>(std::basic_string<char, TestCharTraits, TestAllocator<char> >("def")) << std::endl;
+        std::cout << js.getValueByKeyNoThrow<double>(std::string("xyz")) << std::endl;
+        std::cout << js.getValueByKey<std::string>("def") << std::endl;
+        char key1[] = "def";
+        std::cout << js.getValueByKey<std::string>(key1) << std::endl;
+        const char *key2 = "def";
+        std::cout << js.getValueByKey<std::string>(key2) << std::endl;
+
+        std::cout << "==========" << std::endl;
+        for (auto it = js.begin(); it != js.end(); ++it) {
+            std::cout << it->key().c_str() << ":" << *it << std::endl;
+        }
+        std::cout << "==========" << std::endl;
+        for (auto it = js.cbegin(); it != js.cend(); ++it) {
+            std::cout << it->key().c_str() << ":" << *it << std::endl;
+        }
+        std::cout << "==========" << std::endl;
+        for (auto it = js.rbegin(); it != js.rend(); ++it) {
+            std::cout << it->key().c_str() << ":" << *it << std::endl;
+        }
+        std::cout << "==========" << std::endl;
+        for (auto it = js.crbegin(); it != js.crend(); ++it) {
+            std::cout << it->key().c_str() << ":" << *it << std::endl;
+        }
+        std::cout << "==========" << std::endl;
     }
     //new int;
     //malloc(sizeof(int));
