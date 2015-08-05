@@ -33,8 +33,10 @@ namespace gs {
         void _sessionCallback(const std::shared_ptr<Session> &s, jw::SessionEvent event, const char *data, size_t length) {
             if (data != nullptr) {
                 try {
-                    jw::cppJSON jsonRecv = s->decodeRecvPacket(data, length);
-                    if (jsonRecv == nullptr) {
+                    jw::cppJSON jsonRecv;
+                    unsigned cmd, tag;
+                    s->decodeRecvPacket(jsonRecv, cmd, tag, data, length);
+                    if (cmd == 0) {
                         return;
                     }
 
@@ -45,7 +47,7 @@ namespace gs {
                     jsonSend.insert(std::make_pair("port", s->getRemotePort()));
                     jsonSend.insert(std::make_pair("content", content));
 
-                    std::vector<char> buf = s->encodeSendPacket(jsonSend);
+                    std::vector<char> buf = s->encodeSendPacket(cmd, tag, jsonSend);
 
                     std::lock_guard<jw::QuickMutex> g(_mutex);
                     (void)g;
