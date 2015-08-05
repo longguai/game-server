@@ -2,5 +2,15 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="GameTable.cpp" />
+    <ClCompile Include="GameRoom.cpp" />
+    <ClCompile Include="GameServer.cpp" />
+    <ClCompile Include="U5TKLogic.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GameRoom.h" />
+    <ClInclude Include="GameTable.h" />
+    <ClInclude Include="GameServer.h" />
+    <ClInclude Include="U5TKLogic.h" />
   </ItemGroup>
 </Project>
