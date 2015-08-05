@@ -1436,7 +1436,7 @@ namespace jw {
                 case _JsonType::ValueType::False: return false;
                 case _JsonType::ValueType::True: return true;
                 case _JsonType::ValueType::Integer: return !!c._valueInt;
-                case _JsonType::ValueType::Float: return static_cast<bool>(c._valueFloat);
+                case _JsonType::ValueType::Float: return !!c._valueFloat;
                 case _JsonType::ValueType::String: {
                     // 你非要大小写混合作死老子不伺候你！
                     if (strcmp(c._valueString.c_str(), "true") == 0 || strcmp(c._valueString.c_str(), "True") == 0
