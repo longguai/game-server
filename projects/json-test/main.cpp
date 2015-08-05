@@ -436,6 +436,8 @@ int main(int argc, char *argv[])
         js.insert({std::make_pair(std::string("abc"), 123), std::make_pair(std::string("def"), 456)});
         js.insert(std::make_pair("123", E1_Value));
         js.insert(std::make_pair("45", E2::E2_Value));
+        E1 e1 = js.getValueByKey<E1>("abc");
+        E2 e2 = js.getValueByKey<E2>("def");
         std::cout << js << std::endl;
         
 
