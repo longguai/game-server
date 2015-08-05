@@ -159,7 +159,7 @@ void GameTable::_sendGameState() {
         else {
             json.erase("underCards");
         }
-        std::vector<char> buf = jw::JsonPacketSplitter::encodeSendPacket(CMD_U5TK_REFRESH, (unsigned)-1, json);
+        std::vector<char> buf = jw::JsonPacketSplitter::encodeSendPacket(CMD_U5TK_REFRESH, PUSH_SERVICE_TAG, json);
         LOG_DEBUG(u8"_sendGameState: %.*s", (int)buf.size() - 4, &buf[4]);
         _participants[i]->deliver(buf);
     }
