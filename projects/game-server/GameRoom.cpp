@@ -26,7 +26,10 @@ void GameRoom::deliver(const std::shared_ptr<UserType> &user, unsigned cmd, unsi
 void GameRoom::addUser(const std::shared_ptr<UserType> &user) {
     std::lock_guard<jw::QuickMutex> g(_mutex);
     (void)g;
+    user->name = user->getRemoteIP() + ":" + std::to_string(user->getRemotePort());
+    user->id = std::chrono::system_clock::now().time_since_epoch().count();
     _userSet.insert(user);
+    LOG_INFO("%I64d", user->id);
 }
 
 void GameRoom::removeUser(const std::shared_ptr<UserType> &user) {
@@ -44,7 +47,7 @@ void GameRoom::removeUser(const std::shared_ptr<UserType> &user) {
     jsonSend.insert(std::make_pair("id", user->id));
     jsonSend.insert(std::make_pair("table", table));
     jsonSend.insert(std::make_pair("seat", seat));
-    std::vector<char> buf = user->encodeSendPacket(CMD_FORCED_STAND_UP, (unsigned)-1, jsonSend);
+    std::vector<char> buf = user->encodeSendPacket(CMD_FORCED_STAND_UP, PUSH_SERVICE_TAG, jsonSend);
     std::for_each(_userSet.begin(), _userSet.end(), [&buf](const std::shared_ptr<UserType> &s) {
         s->deliver(buf);
     });
@@ -72,7 +75,15 @@ void GameRoom::handleEnter(unsigned cmd, unsigned tag, const std::shared_ptr<Use
                 ret.first->push_back(std::move(json));
             });
         }
-        user->deliver(user->encodeSendPacket(cmd, tag, jsonSend));
+        std::vector<char> buf = user->encodeSendPacket(cmd, PUSH_SERVICE_TAG, jsonSend);
+        std::for_each(_userSet.begin(), _userSet.end(), [&buf, &user](const std::shared_ptr<UserType> &s) {
+            if (s != user) {
+                s->deliver(buf);
+            }
+        });
+        jsonSend.insert(std::make_pair("yourId", user->id));
+        buf = user->encodeSendPacket(cmd, tag, jsonSend);
+        user->deliver(buf);
     }
     catch (std::exception &e) {
         LOG_ERROR("%s", e.what());
@@ -105,12 +116,15 @@ void GameRoom::handleSitDown(unsigned cmd, unsigned tag, const std::shared_ptr<U
             jsonSend.insert(std::make_pair("id", user->id));
             jsonSend.insert(std::make_pair("table", table));
             jsonSend.insert(std::make_pair("seat", seat));
-            std::vector<char> buf = user->encodeSendPacket(cmd, (unsigned)-1, jsonSend);
+            std::vector<char> buf = user->encodeSendPacket(cmd, PUSH_SERVICE_TAG, jsonSend);
             std::for_each(_userSet.begin(), _userSet.end(), [&buf, &user](const std::shared_ptr<UserType> &s) {
                 if (user != s) {
                     s->deliver(buf);
                 }
             });
+
+            _table[table].standUp(nullptr, 0);
+            jsonSend.insert(std::make_pair("players", std::vector<int64_t>({  })));
             user->modifyTag(buf, cmd);
             user->deliver(buf);
         }
@@ -136,7 +150,7 @@ void GameRoom::handleStandUp(unsigned cmd, unsigned tag, const std::shared_ptr<U
             user->seat = -1;
             jsonSend.insert(std::make_pair("result", true));
             jsonSend.insert(std::make_pair("id", user->id));
-            std::vector<char> buf = user->encodeSendPacket(cmd, (unsigned)-1, jsonSend);
+            std::vector<char> buf = user->encodeSendPacket(cmd, PUSH_SERVICE_TAG, jsonSend);
             std::for_each(_userSet.begin(), _userSet.end(), [&buf, &user](const std::shared_ptr<UserType> &s) {
                 if (s != user) {
                     s->deliver(buf);
@@ -171,7 +185,7 @@ void GameRoom::handleHandsUp(unsigned cmd, unsigned tag, const std::shared_ptr<U
         else {
             jsonSend.insert(std::make_pair("result", true));
             jsonSend.insert(std::make_pair("id", user->id));
-            std::vector<char> buf = user->encodeSendPacket(cmd, (unsigned)-1, jsonSend);
+            std::vector<char> buf = user->encodeSendPacket(cmd, PUSH_SERVICE_TAG, jsonSend);
             std::for_each(_userSet.begin(), _userSet.end(), [&buf, &user](const std::shared_ptr<UserType> &s) {
                 if (s != user) {
                     s->deliver(buf);
@@ -195,7 +209,7 @@ void GameRoom::handleChatInRoom(unsigned cmd, unsigned tag, const std::shared_pt
         jsonSend.insert(std::make_pair("port", user->getRemotePort()));
         jsonSend.insert(std::make_pair("content", content));
 
-        std::vector<char> buf = user->encodeSendPacket(cmd, (unsigned)-1, jsonSend);
+        std::vector<char> buf = user->encodeSendPacket(cmd, PUSH_SERVICE_TAG, jsonSend);
         std::lock_guard<jw::QuickMutex> g(_mutex);
         (void)g;
         std::for_each(_userSet.begin(), _userSet.end(), [&buf](const std::shared_ptr<UserType> &s) {
