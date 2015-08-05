@@ -6,6 +6,9 @@
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
+#include <stdint.h>
+
+#define PUSH_SERVICE_TAG (uint32_t)-1
 
 namespace jw {
     class PacketSplitter {
@@ -101,7 +104,7 @@ namespace jw {
                 json.clear();
             }
             else {
-                LOG_DEBUG("cmd = %u tag = %u | %.*s", cmd, tag, (int)size - 8, &buf[8]);
+                LOG_DEBUG("[recv] package size = %lu cmd = %u tag = %u | %.*s", (unsigned long)size, cmd, tag, (int)size - 8, &buf[8]);
                 json.Parse(&buf[8]);
             }
         }
@@ -126,7 +129,7 @@ namespace jw {
             buf[10] = ((tag >> 16) & 0xFF);
             buf[11] = ((tag >> 24) & 0xFF);
 
-            LOG_DEBUG("%.*s", (int)length - 8, !json.empty() ? &buf[12] : "");
+            LOG_DEBUG("[send] package size = %lu, cmd = %u, tag = %u | %.*s", (unsigned long)length, cmd, tag, (int)length - 8, !json.empty() ? &buf[12] : "");
             return buf;
         }
 
