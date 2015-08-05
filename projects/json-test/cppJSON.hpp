@@ -1412,7 +1412,7 @@ namespace jw {
         template <class _JsonType>
         struct AsImpl<_JsonType, const _JsonType *> {
             typedef const _JsonType *TargetType;
-            inline static TargetType invoke(const _JsonType &c) {
+            static inline TargetType invoke(const _JsonType &c) {
                 return &c;
             }
         };
@@ -1421,8 +1421,39 @@ namespace jw {
         template <class _JsonType>
         struct AsImpl<_JsonType, const _JsonType &> {
             typedef const _JsonType &TargetType;
-            inline static TargetType invoke(const _JsonType &c) {
+            static inline TargetType invoke(const _JsonType &c) {
                 return c;
+            }
+        };
+
+        // AS成bool
+        template <class _JsonType>
+        struct AsImpl<_JsonType, bool> {
+            typedef bool TargetType;
+            static inline TargetType invoke(const _JsonType &c) {
+                switch (c._valueType) {
+                case _JsonType::ValueType::Null: return false;
+                case _JsonType::ValueType::False: return false;
+                case _JsonType::ValueType::True: return false;
+                case _JsonType::ValueType::Integer: return !!c._valueInt;
+                case _JsonType::ValueType::Float: return static_cast<bool>(c._valueFloat);
+                case _JsonType::ValueType::String: {
+                    if (strcmp(c._valueString.c_str(), "true") == 0 || strcmp(c._valueString.c_str(), "True") == 0
+                        || strcmp(c._valueString.c_str(), "TRUE") == 0 || strcmp(c._valueString.c_str(), "1")) {
+                        return true;
+                    }
+                    else if (strcmp(c._valueString.c_str(), "false") == 0 || strcmp(c._valueString.c_str(), "False") == 0
+                        || strcmp(c._valueString.c_str(), "FALSE") == 0 || strcmp(c._valueString.c_str(), "0")) {
+                        return false;
+                    }
+                    else {
+                        throw std::logic_error("Cannot convert JSON_String to bool"); break;
+                    }
+                }
+                case _JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to bool"); break;
+                case _JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to bool"); break;
+                default: throw std::out_of_range("JSON type out of range"); break;
+                }
             }
         };
 
@@ -1620,22 +1651,9 @@ namespace jw {
         // 其他未特化的
         template <class _JsonType, class _TargetType>
         _TargetType AsImpl<_JsonType, _TargetType>::invoke(const _JsonType &c) {
-            std::basic_stringstream<char, typename _JsonType::StringType::traits_type, typename _JsonType::StringType::allocator_type> ss;
-            switch (c._valueType) {
-            case _JsonType::ValueType::Null: break;
-            case _JsonType::ValueType::False: ss << 0; break;
-            case _JsonType::ValueType::True: ss << 1; break;
-            case _JsonType::ValueType::Integer: ss << c._valueInt; break;
-            case _JsonType::ValueType::Float: ss << c._valueFloat; break;
-            case _JsonType::ValueType::String: ss << c._valueString; break;
-            case _JsonType::ValueType::Array: throw std::logic_error("Cannot convert JSON_Array to target type"); break;
-            case _JsonType::ValueType::Object: throw std::logic_error("Cannot convert JSON_Object to target type"); break;
-            default: throw std::out_of_range("JSON type out of range"); break;
-            }
-            TargetType ret = TargetType();
-            // TODO：
-            //ss >> ret;
-            return ret;
+            // 这里对枚举可以编译通过，对其他未特化的类型则报编译错误
+            static_assert(std::is_enum<_TargetType>::value, "unimplemented type");
+            return static_cast<_TargetType>(AsImpl<_JsonType, int64_t>::invoke(c));
         }
     }
 
