@@ -110,6 +110,9 @@ void GameRoom::handleSitDown(unsigned cmd, unsigned tag, const std::shared_ptr<U
             user->deliver(user->encodeSendPacket(cmd, tag, jsonSend));
         }
         else {
+            if (user->table != -1 && user->seat != -1) {
+                _table[table].standUp(user, seat);
+            }
             user->table = table;
             user->seat = seat;
             jsonSend.insert(std::make_pair("result", true));
@@ -123,9 +126,14 @@ void GameRoom::handleSitDown(unsigned cmd, unsigned tag, const std::shared_ptr<U
                 }
             });
 
-            _table[table].standUp(nullptr, 0);
-            jsonSend.insert(std::make_pair("players", std::vector<int64_t>({  })));
-            user->modifyTag(buf, cmd);
+            std::pair<jw::cppJSON::iterator, bool> ret = jsonSend.insert(std::make_pair("participants", jw::cppJSON(jw::cppJSON::ValueType::Array)));
+            if (ret.second) {
+                const std::shared_ptr<UserType> (&participants)[4] = _table[table].getParticipants();
+                std::for_each(std::begin(participants), std::end(participants), [&ret](const std::shared_ptr<UserType> &user) {
+                    ret.first->push_back((user != nullptr) ? user->id : 0);
+                });
+            }
+            buf = user->encodeSendPacket(cmd, tag, jsonSend);
             user->deliver(buf);
         }
     }
