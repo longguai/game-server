@@ -49,6 +49,14 @@ namespace gs {
             return true;
         }
 
+        // 语法：返回数组的引用
+        std::shared_ptr<_GameUser> (&getParticipants())[_GameLogic::ParticipantCount] {
+            return _participants;
+        }
+
+        const std::shared_ptr<_GameUser> (&getParticipants() const)[_GameLogic::ParticipantCount] {
+            return _participants;
+        }
     protected:
         std::shared_ptr<_GameUser> _participants[_GameLogic::ParticipantCount];  // 参与玩家
         std::vector<std::shared_ptr<_GameUser> > _watchers;  // 旁观玩家
