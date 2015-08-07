@@ -213,8 +213,9 @@ void GameRoom::handleChatInRoom(unsigned cmd, unsigned tag, const std::shared_pt
         std::string content = jsonRecv.getValueByKey<std::string>("content");
 
         jw::cppJSON jsonSend(jw::cppJSON::ValueType::Object);
-        jsonSend.insert(std::make_pair("ip", user->getRemoteIP()));
-        jsonSend.insert(std::make_pair("port", user->getRemotePort()));
+        jsonSend.insert(std::make_pair("sendTime", time(nullptr)));
+        jsonSend.insert(std::make_pair("id", user->id));
+        jsonSend.insert(std::make_pair("name", user->name));
         jsonSend.insert(std::make_pair("content", content));
 
         std::vector<char> buf = user->encodeSendPacket(cmd, PUSH_SERVICE_TAG, jsonSend);
