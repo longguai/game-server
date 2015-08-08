@@ -8,7 +8,7 @@
 
 enum class UserStatus {
     Free = 0,
-    HandsUp = 1,
+    Ready = 1,
     Playing = 2
 };
 
@@ -26,7 +26,7 @@ typedef jw::BasicSession<RoomUserBase, 1024U> GameUser;
 
 class GameTable : public gs::BasicTable<GameUser, U5TKLogic> {
 public:
-    bool handsUp(unsigned seat);
+    bool ready(unsigned seat);
     void deliver(unsigned seat, unsigned cmd, unsigned tag, const jw::cppJSON &json);
     void forcedStandUp(unsigned seat);
 

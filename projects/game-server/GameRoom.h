@@ -21,7 +21,7 @@ private:
     void handleEnter(unsigned cmd, unsigned tag, const std::shared_ptr<UserType> &user, const jw::cppJSON &jsonRecv);
     void handleSitDown(unsigned cmd, unsigned tag, const std::shared_ptr<UserType> &user, const jw::cppJSON &jsonRecv);
     void handleStandUp(unsigned cmd, unsigned tag, const std::shared_ptr<UserType> &user, const jw::cppJSON &jsonRecv);
-    void handleHandsUp(unsigned cmd, unsigned tag, const std::shared_ptr<UserType> &user, const jw::cppJSON &jsonRecv);
+    void handleReady(unsigned cmd, unsigned tag, const std::shared_ptr<UserType> &user, const jw::cppJSON &jsonRecv);
     void handleChatInRoom(unsigned cmd, unsigned tag, const std::shared_ptr<UserType> &user, const jw::cppJSON &jsonRecv);
     void handleTableAction(unsigned cmd, unsigned tag, const std::shared_ptr<UserType> &user, const jw::cppJSON &jsonRecv);
 };

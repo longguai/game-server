@@ -1,7 +1,7 @@
 ﻿#include "GameTable.h"
 #include "../common-test/TimerEngine.h"
 
-#define CMD_U5TK_SEND_CARD 4001
+//#define CMD_U5TK_SEND_CARD 4001
 #define CMD_U5TK_SHOW 4002
 #define CMD_U5TK_PASS 4003
 #define CMD_U5TK_EXCHANGE 4004
@@ -18,7 +18,7 @@ static inline std::vector<uint32_t> _TransformCards(const std::vector<U5TKLogic:
     return ret;
 }
 
-bool GameTable::handsUp(unsigned seat) {
+bool GameTable::ready(unsigned seat) {
     std::lock_guard<jw::QuickMutex> g(_mutex);
     (void)g;
     LOG_DEBUG(u8"玩家%d准备", seat);
@@ -160,7 +160,7 @@ void GameTable::_sendGameState() {
             json.erase("underCards");
         }
         std::vector<char> buf = jw::JsonPacketSplitter::encodeSendPacket(CMD_U5TK_REFRESH, PUSH_SERVICE_TAG, json);
-        LOG_DEBUG(u8"_sendGameState: %.*s", (int)buf.size() - 4, &buf[4]);
+        //LOG_DEBUG(u8"_sendGameState: %.*s", (int)buf.size() - 4, &buf[4]);
         _participants[i]->deliver(buf);
     }
 }

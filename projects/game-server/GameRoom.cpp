@@ -3,7 +3,7 @@
 #define CMD_ENTER 3000
 #define CMD_SIT_DOWN 3001
 #define CMD_STAND_UP 3002
-#define CMD_HANDS_UP 3003
+#define CMD_READY 3003
 #define CMD_CHAT_IN_ROOM 3004
 #define CMD_FORCED_STAND_UP 3005
 
@@ -13,7 +13,7 @@ void GameRoom::deliver(const std::shared_ptr<UserType> &user, unsigned cmd, unsi
         case CMD_ENTER: handleEnter(cmd, tag, user, jsonRecv); return;
         case CMD_SIT_DOWN: handleSitDown(cmd, tag, user, jsonRecv); return;
         case CMD_STAND_UP: handleStandUp(cmd, tag, user, jsonRecv); return;
-        case CMD_HANDS_UP: handleHandsUp(cmd, tag, user, jsonRecv); return;
+        case CMD_READY: handleReady(cmd, tag, user, jsonRecv); return;
         case CMD_CHAT_IN_ROOM: handleChatInRoom(cmd, tag, user, jsonRecv); return;
         default: handleTableAction(cmd, tag, user, jsonRecv); return;
         }
@@ -156,6 +156,7 @@ void GameRoom::handleStandUp(unsigned cmd, unsigned tag, const std::shared_ptr<U
         else {
             user->table = -1;
             user->seat = -1;
+            user->status = UserStatus::Free;
             jsonSend.insert(std::make_pair("result", true));
             jsonSend.insert(std::make_pair("id", user->id));
             std::vector<char> buf = user->encodeSendPacket(cmd, PUSH_SERVICE_TAG, jsonSend);
@@ -173,7 +174,7 @@ void GameRoom::handleStandUp(unsigned cmd, unsigned tag, const std::shared_ptr<U
     }
 }
 
-void GameRoom::handleHandsUp(unsigned cmd, unsigned tag, const std::shared_ptr<UserType> &user, const jw::cppJSON &jsonRecv) {
+void GameRoom::handleReady(unsigned cmd, unsigned tag, const std::shared_ptr<UserType> &user, const jw::cppJSON &jsonRecv) {
     try {
         std::lock_guard<jw::QuickMutex> g(_mutex);
         (void)g;
@@ -185,7 +186,7 @@ void GameRoom::handleHandsUp(unsigned cmd, unsigned tag, const std::shared_ptr<U
             jsonSend.insert(std::make_pair("reason", u8"你不在桌子上"));
             user->deliver(user->encodeSendPacket(cmd, tag, jsonSend));
         }
-        else if (!_table[user->table].handsUp(user->seat)) {
+        else if (!_table[user->table].ready(user->seat)) {
             jsonSend.insert(std::make_pair("result", false));
             jsonSend.insert(std::make_pair("reason", u8"当前状态不允许准备"));
             user->deliver(user->encodeSendPacket(cmd, tag, jsonSend));
