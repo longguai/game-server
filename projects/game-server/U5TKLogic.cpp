@@ -131,6 +131,7 @@ void U5TKLogic::setup() {
         _bankerPos = -1;
         _turnPos = -1;
     }
+    _passFlag.reset();
     _shownPos = -1;
     _leaderPos = -1;
 
@@ -300,7 +301,7 @@ U5TKLogic::ErrorType U5TKLogic::doShowTrump(int pos, const std::vector<CARD> &ca
         std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
         int64_t dt = std::chrono::duration_cast<std::chrono::seconds>(now - _sendTime).count();
         ptrdiff_t offset = std::max(static_cast<ptrdiff_t>(dt), static_cast<ptrdiff_t>(_handCards[pos].size()));
-        if (_IsSubCardStringUnsorted(std::vector<CARD>(_handCards[pos].begin(), _handCards[pos].begin() + offset), cards)) {
+        if (!_IsSubCardStringUnsorted(std::vector<CARD>(_handCards[pos].begin(), _handCards[pos].begin() + offset), cards)) {
             return ErrorType::ILLEGAL_CARDS;
         }
     }
@@ -371,7 +372,7 @@ U5TKLogic::ErrorType U5TKLogic::passShow(int pos) {
         if (pos == _turnPos) {
             _passFlag.set(pos);
             if (_passFlag.all()) {  // 都过了
-                if (_shownPos > 0) {  // 有人叫主了
+                if (!_shownCards.empty()) {  // 有人叫主了
                     sendUnderCards();
                 }
                 else {  // 憋庄
