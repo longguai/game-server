@@ -192,6 +192,7 @@ void GameRoom::handleReady(unsigned cmd, unsigned tag, const std::shared_ptr<Use
             user->deliver(user->encodeSendPacket(cmd, tag, jsonSend));
         }
         else {
+            user->status = UserStatus::Ready;
             jsonSend.insert(std::make_pair("result", true));
             jsonSend.insert(std::make_pair("id", user->id));
             std::vector<char> buf = user->encodeSendPacket(cmd, PUSH_SERVICE_TAG, jsonSend);
