@@ -143,10 +143,10 @@ void GameTable::_sendGameState() {
     json.insert(std::make_pair("scores", _logic.getScores()));
 
     json.insert(std::make_pair("showCards", _TransformCards(_logic.getShownCards())));
-    std::vector<std::vector<uint32_t> > bringingCards({ _TransformCards(_logic.getBringCards(0)), _TransformCards(_logic.getBringCards(1)), _TransformCards(_logic.getBringCards(2)), _TransformCards(_logic.getBringCards(3)) });
-    json.insert(std::make_pair("bringingCards", bringingCards));
-    std::vector<size_t> broughtCounts({ _logic.getRecordCards(0).size(), _logic.getRecordCards(1).size(), _logic.getRecordCards(2).size(), _logic.getRecordCards(3).size() });
-    json.insert(std::make_pair("broughtCounts", broughtCounts));
+    std::vector<std::vector<uint32_t> > broughtCards({ _TransformCards(_logic.getRecordCards(0)), _TransformCards(_logic.getRecordCards(1)), _TransformCards(_logic.getRecordCards(2)), _TransformCards(_logic.getRecordCards(3)) });
+    json.insert(std::make_pair("broughtCards", broughtCards));
+    std::vector<size_t> bringingCounts({ _logic.getBringCards(0).size(), _logic.getBringCards(1).size(), _logic.getBringCards(2).size(), _logic.getBringCards(3).size() });
+    json.insert(std::make_pair("bringingCounts", bringingCounts));
     json.insert(std::make_pair("scoreCards", _TransformCards(_logic.getScoreCards())));
 
     for (size_t i = 0; i < ParticipantCount; ++i) {
@@ -249,29 +249,4 @@ void GameTable::deliver(unsigned seat, unsigned cmd, unsigned tag, const jw::cpp
     catch (std::exception &e) {
         LOG_ERROR("%s", e.what());
     }
-
-    //_logic.operateWithCards(static_cast<U5TKLogic::Operation>(cmd - CMD_U5TK_SHOW + 2), seat, nullptr, nullptr);
-    //U5TKLogic logic;
-    //logic._grade = 10;
-    //logic._trump = 2;
-    //logic.shuffleCards();
-    //logic._sortCards();
-    //for (int i = 0; i < 4; ++i)
-    //{
-    //    //std::for_each(logic._handCards[i].begin(), logic._handCards[i].end(), std::bind(&printf, "%.8X  ", std::placeholders::_1));
-    //    std::for_each(logic._handCards[i].begin(), logic._handCards[i].end(), std::bind(&printf, "%s ", std::bind(&U5TKLogic::cardDebugString, std::placeholders::_1)));
-    //    puts("");
-    //}
-    ////std::for_each(logic._underCards.begin(), logic._underCards.end(), std::bind(&printf, "%.8X  ", std::placeholders::_1));
-    //std::for_each(logic._underCards.begin(), logic._underCards.end(), std::bind(&printf, "%s ", std::bind(&U5TKLogic::cardDebugString, std::placeholders::_1)));
-
-    //jw::cppJSON json(jw::cppJSON::ValueType::Object);
-    //json.insert(std::make_pair("seat", 0));
-    //json.insert(std::make_pair("operation", 0));
-    //json.insert(std::make_pair("cards", std::vector<unsigned>({ 0, 1, 2, 3, 4, 5 })));
-    //std::cout << json.PrintUnformatted() << std::endl;
-
-    //jw::cppJSON::const_iterator it = json.find("cards");
-    //std::vector<unsigned> vec = it->as<std::vector<unsigned> >();
-    //return 0
 }
