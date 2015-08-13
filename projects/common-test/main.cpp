@@ -12,82 +12,9 @@
 
 #include "TimerEngine.h"
 
-namespace gs {
-    typedef jw::BasicSession<jw::JsonPacketSplitter, 1024U> Session;
-
-    class ServerProxy {
-    public:
-        void acceptCallback(asio::ip::tcp::socket &&socket) {
-            std::shared_ptr<Session> s = std::make_shared<Session>(std::move(socket),
-                std::bind(&ServerProxy::_sessionCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-            {
-                std::lock_guard<jw::QuickMutex> g(_mutex);
-                (void)g;
-
-                _sessions.insert(s);
-            }
-            s->start();
-        }
-
-    private:
-        void _sessionCallback(const std::shared_ptr<Session> &s, jw::SessionEvent event, const char *data, size_t length) {
-            if (data != nullptr) {
-                try {
-                    jw::cppJSON jsonRecv;
-                    unsigned cmd, tag;
-                    s->decodeRecvPacket(jsonRecv, cmd, tag, data, length);
-                    if (cmd == 0) {
-                        return;
-                    }
-
-                    std::string content = jsonRecv.getValueByKey<std::string>("content");
-
-                    jw::cppJSON jsonSend(jw::cppJSON::ValueType::Object);
-                    jsonSend.insert(std::make_pair("ip", s->getRemoteIP()));
-                    jsonSend.insert(std::make_pair("port", s->getRemotePort()));
-                    jsonSend.insert(std::make_pair("content", content));
-
-                    std::vector<char> buf = s->encodeSendPacket(cmd, tag, jsonSend);
-
-                    std::lock_guard<jw::QuickMutex> g(_mutex);
-                    (void)g;
-                    std::for_each(_sessions.begin(), _sessions.end(), [&buf](const std::shared_ptr<Session> &s) {
-                        s->deliver(&buf.at(0), buf.size());
-                    });
-                }
-                catch (std::exception &e) {
-                    LOG_ERROR("%s", e.what());
-
-                    std::lock_guard<jw::QuickMutex> g(_mutex);
-                    (void)g;
-
-                    _sessions.erase(s);
-                }
-            }
-            else {
-                std::lock_guard<jw::QuickMutex> g(_mutex);
-                (void)g;
-
-                _sessions.erase(s);
-            }
-        }
-
-    private:
-        std::unordered_set<std::shared_ptr<Session> > _sessions;
-        jw::QuickMutex _mutex;
-    };
-
-    typedef jw::BasicServer<ServerProxy, 128> Server;
-}
-
 #include <iostream>
 
 int main() {
-    jw::IOService<gs::Server> s(8899);
-    (void)s;
-    getchar();
-    return 0;
-
     auto te = jw::TimerEngine::getInstance();
     te->registerTimer(1, std::chrono::milliseconds(1000), jw::TimerEngine::REPEAT_FOREVER, [&te](int64_t dt) {
         LOG_INFO("timer dt = %I64d", dt);
