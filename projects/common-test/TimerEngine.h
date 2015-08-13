@@ -6,6 +6,7 @@
 #include <chrono>
 #include <vector>
 #include <thread>
+#include <memory>
 #include "QuickMutex.h"
 
 namespace jw {
@@ -18,6 +19,12 @@ namespace jw {
 
         static const uint32_t REPEAT_FOREVER = UINT32_MAX;
 
+        /**
+         * @param timerId ID （必须全局唯一）
+         * @param elapse 间隔
+         * @param repeatTimes 重复次数
+         * @param callback 回调函数
+         */
         uintptr_t registerTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, const std::function<void (int64_t)> &callback);
         uintptr_t registerTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, std::function<void (int64_t)> &&callback);
 
@@ -30,15 +37,12 @@ namespace jw {
         template <class _Function>
         uintptr_t _RegisterTimer(uintptr_t timerId, std::chrono::milliseconds elapse, uint32_t repeatTimes, _Function &&callback);
 
-        bool _UnregisterTimer(uintptr_t timerId);
-
     private:
-        std::vector<TimerItem> _itemsActive;
-        volatile bool _changedInTimeThread;
+        std::vector<std::shared_ptr<TimerItem> > _itemsActive;
         QuickMutex _mutex;
 
-        std::thread *_thread;
-        volatile bool _shouldQuit;
+        std::thread *_thread = nullptr;
+        volatile bool _shouldQuit = false;
 
         void _ThreadProc();
     };
