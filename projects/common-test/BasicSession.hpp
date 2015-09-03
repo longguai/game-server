@@ -63,16 +63,20 @@ namespace jw {
         const std::string &getLocalIP() const { return _localIP; }
         unsigned short getLocalPort() const { return _localPort; }
 
-        void deliver(const void *data, size_t length) {
+        void deliver(std::vector<char> &&buf) {
             std::lock_guard<jw::QuickMutex> g(_mutex);
             (void)g;
 
             bool empty = _writeQueue.empty();
-            _writeQueue.push_back(asio::buffer(data, length));
+            _writeQueue.push_back(std::move(buf));
             // push之前的发送队列为空，则须要发起write
             if (empty) {
                 _doWrite();
             }
+        }
+
+        void deliver(const void *data, size_t length) {
+            deliver(std::vector<char>((char *)data, (char *)data + length));
         }
 
         void deliver(const std::vector<char> &buf) {
@@ -99,7 +103,7 @@ namespace jw {
         }
 
         inline void _doWrite() {
-            asio::async_write(_socket, _writeQueue.front(),
+            asio::async_write(_socket, asio::buffer(&_writeQueue.front()[0], _writeQueue.front().size()),
                 std::bind(&BasicSession<_Extra, _BufSize>::_writeCallback, this, std::placeholders::_1, std::placeholders::_2));
         }
 
@@ -127,7 +131,7 @@ namespace jw {
         unsigned short _localPort = 0;
         char _readData[_BufSize];
 
-        std::deque<asio::const_buffers_1> _writeQueue;
+        std::deque<std::vector<char> > _writeQueue;
         jw::QuickMutex _mutex;
 
         SessionCallback _sessionCallback;
