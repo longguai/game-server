@@ -480,9 +480,18 @@ U5TKLogic::ErrorType U5TKLogic::doBring(int pos, const std::vector<CARD> &cards)
         std::copy(cards.begin(), cards.end(), std::back_inserter(_bringCards[pos]));
         std::copy(cards.begin(), cards.end(), std::back_inserter(_recordCards[pos]));
 
-        _turnPos = (_turnPos + 1) & 3;  // 轮转
-        if (_turnPos == _leaderPos) {  // 已经出玩一轮牌
+        if (!_handCards[_turnPos].empty()) {
+            _turnPos = (_turnPos + 1) & 3;  // 轮转
+            if (_turnPos == _leaderPos) {  // 已经出玩一轮牌
+                _nextBring();
+            }
+        } else {  // 最后一轮自动出
+            do {
+                _turnPos = (_turnPos + 1) & 3;  // 轮转
+                doBring(_turnPos, _handCards[_turnPos]);
+            } while (_turnPos != _leaderPos);
             _nextBring();
+            _gameOver();  // 结束游戏
         }
     }
     return ret;
@@ -698,19 +707,14 @@ void U5TKLogic::_nextBring() {
     _leaderPos = maxPos;
     _turnPos = maxPos;
 
-    if (_handCards[_turnPos].empty()) {  // 手上没有牌了，结束游戏
-        _gameOver();
-    }
-    else {  // 手上还有牌，清空，准备下轮
-        _bringInfo[0] = 0;
-        _bringInfo[1] = 0;
-        _bringInfo[2] = 0;
-        _bringInfo[3] = 0;
-        _bringCards[0].clear();
-        _bringCards[1].clear();
-        _bringCards[2].clear();
-        _bringCards[3].clear();
-    }
+    _bringInfo[0] = 0;
+    _bringInfo[1] = 0;
+    _bringInfo[2] = 0;
+    _bringInfo[3] = 0;
+    _bringCards[0].clear();
+    _bringCards[1].clear();
+    _bringCards[2].clear();
+    _bringCards[3].clear();
 }
 
 void U5TKLogic::_gameOver() {
